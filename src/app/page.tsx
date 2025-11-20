@@ -480,14 +480,14 @@ export default function Home() {
               <div className="flex-1 overflow-y-auto mb-4 space-y-4">
                 {messages.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-gray-400 mb-4">暂无对话，上传图片后开始聊天</p>
+                    <p className="text-gray-600 mb-4 font-medium">暂无对话，上传图片后开始聊天</p>
                     <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
                       {['生成商品标题', '生成商品卖点', '生成装饰宣传图'].map((text) => (
                         <button
                           key={text}
                           onClick={() => productImage && setInputValue(text)}
                           disabled={!productImage}
-                          className="px-4 py-2 bg-indigo-100 text-indigo-700 rounded-lg hover:bg-indigo-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-4 py-2 bg-indigo-100 text-indigo-800 font-medium rounded-lg hover:bg-indigo-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {text}
                         </button>
@@ -550,7 +550,7 @@ export default function Home() {
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   placeholder={productImage ? '输入您的需求，如：生成商品标题' : '请先上传商品图片'}
                   disabled={!productImage || isLoading}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-800 placeholder:text-gray-500"
                 />
                 <button
                   onClick={handleSendMessage}
@@ -658,7 +658,7 @@ export default function Home() {
                   <select
                     value={videoTransition}
                     onChange={(e) => setVideoTransition(e.target.value as 'fade' | 'slide' | 'none')}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-800 font-medium"
                   >
                     <option value="fade">淡入淡出</option>
                     <option value="slide">滑动</option>
@@ -695,7 +695,7 @@ export default function Home() {
                       </div>
                     ) : (
                       <>
-                        <p className="text-xs text-gray-500 mb-2">为每张图片输入讲解文案（每行一张）</p>
+                        <p className="text-xs text-gray-600 mb-2 font-medium">为每张图片输入讲解文案（每行一张）</p>
                         {Array.from({ length: uploadedImages.length }).map((_, index) => (
                           <input
                             key={index}
@@ -707,7 +707,7 @@ export default function Home() {
                               newCaptions[index] = e.target.value;
                               setVideoCaptions(newCaptions);
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-800 placeholder:text-gray-500"
                           />
                         ))}
                       </>
