@@ -219,18 +219,160 @@ export function downloadVideo(blob: Blob, filename: string = `video_${Date.now()
 }
 
 /**
- * 生成默认讲解文案
+ * 生成默认讲解文案（智能随机，支持多种场景）
  */
 function generateDefaultCaptions(imageCount: number): string[] {
-  const defaultCaptions = [
-    '欢迎了解我们的产品',
-    '产品特点展示',
-    '多场景应用',
-    '优质材质保证',
-    '立即购买享优惠',
-  ];
+  // 丰富的字幕话术库（按类型分类）
+  const captionLibrary = {
+    // 开场引导类（第1张图片）
+    opening: [
+      '欢迎了解我们的产品',
+      '精选好物推荐',
+      '新品首发，抢先看',
+      '品质生活从这里开始',
+      '发现更好的选择',
+      '为您精心挑选',
+      '一起探索精彩',
+      '优选好物等你来',
+      '匠心之作，值得拥有',
+      '开启美好购物体验',
+    ],
+    
+    // 产品特点类（中间图片）
+    features: [
+      '产品特点展示',
+      '细节之处见品质',
+      '匠心工艺，精益求精',
+      '每一处都精心设计',
+      '品质看得见',
+      '严选优质材料',
+      '专业品质保证',
+      '设计独特，别具匠心',
+      '功能强大，使用便捷',
+      '精工细作，追求完美',
+      '多重工艺，层层把关',
+      '高端品质，亲民价格',
+    ],
+    
+    // 场景应用类
+    scenarios: [
+      '多场景应用',
+      '适合各种场合',
+      '居家必备好物',
+      '办公学习好帮手',
+      '户外运动首选',
+      '日常生活好伴侣',
+      '送礼佳品',
+      '全家人都喜欢',
+      '满足多样需求',
+      '随时随地都能用',
+    ],
+    
+    // 材质工艺类
+    materials: [
+      '优质材质保证',
+      '环保健康材料',
+      '经久耐用不易坏',
+      '精选天然原料',
+      '安全无害放心用',
+      '绿色环保新科技',
+      '进口材质更放心',
+      '通过国际认证',
+      '匠人精神铸造',
+      '传统工艺现代升级',
+    ],
+    
+    // 用户体验类
+    experience: [
+      '用户好评如潮',
+      '千万用户的选择',
+      '五星好评推荐',
+      '回购率超高',
+      '口碑爆款',
+      '买过都说好',
+      '真实用户体验',
+      '让生活更美好',
+      '提升幸福感',
+      '超出期待的惊喜',
+    ],
+    
+    // 优惠促销类（结尾）
+    promotion: [
+      '立即购买享优惠',
+      '限时特价，抢到就是赚到',
+      '优惠多多，不容错过',
+      '现在下单立减优惠',
+      '今日特价，手慢无',
+      '加购物车享折扣',
+      '包邮到家，放心购买',
+      '满减活动进行中',
+      '新客专享超值价',
+      '限时秒杀，先到先得',
+    ],
+    
+    // 品牌信誉类
+    brand: [
+      '大品牌，值得信赖',
+      '专业团队精心打造',
+      '行业领先技术',
+      '十年品质保证',
+      '官方正品保障',
+      '全国联保服务',
+      '售后无忧',
+      '品牌实力见证',
+    ],
+    
+    // 效果承诺类
+    results: [
+      '效果看得见',
+      '即刻体验惊喜',
+      '轻松解决痛点',
+      '改变从现在开始',
+      '让生活更简单',
+      '省时省力好帮手',
+      '一用就爱上',
+      '超预期的表现',
+    ],
+  };
   
-  return defaultCaptions.slice(0, imageCount);
+  // 根据图片数量智能组合字幕
+  const captions: string[] = [];
+  
+  if (imageCount === 1) {
+    // 1张图：开场
+    captions.push(randomPick(captionLibrary.opening));
+  } else if (imageCount === 2) {
+    // 2张图：开场 + 促销
+    captions.push(randomPick(captionLibrary.opening));
+    captions.push(randomPick(captionLibrary.promotion));
+  } else if (imageCount === 3) {
+    // 3张图：开场 + 特点 + 促销
+    captions.push(randomPick(captionLibrary.opening));
+    captions.push(randomPick(captionLibrary.features));
+    captions.push(randomPick(captionLibrary.promotion));
+  } else if (imageCount === 4) {
+    // 4张图：开场 + 特点 + 场景/材质 + 促销
+    captions.push(randomPick(captionLibrary.opening));
+    captions.push(randomPick(captionLibrary.features));
+    captions.push(randomPick([...captionLibrary.scenarios, ...captionLibrary.materials]));
+    captions.push(randomPick(captionLibrary.promotion));
+  } else {
+    // 5张图：开场 + 特点 + 场景 + 体验/材质 + 促销
+    captions.push(randomPick(captionLibrary.opening));
+    captions.push(randomPick(captionLibrary.features));
+    captions.push(randomPick(captionLibrary.scenarios));
+    captions.push(randomPick([...captionLibrary.experience, ...captionLibrary.materials, ...captionLibrary.results]));
+    captions.push(randomPick(captionLibrary.promotion));
+  }
+  
+  return captions;
+}
+
+/**
+ * 从数组中随机选择一个元素
+ */
+function randomPick<T>(array: T[]): T {
+  return array[Math.floor(Math.random() * array.length)];
 }
 
 /**
