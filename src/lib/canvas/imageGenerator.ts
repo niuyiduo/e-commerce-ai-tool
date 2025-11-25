@@ -3,6 +3,171 @@
  * 用于生成带文案和装饰元素的电商宣传图
  */
 
+// 在线素材库配置
+const ONLINE_STICKERS = {
+  // Emoji 表情（支持直接绘制）- 扩充到 100+ 种
+  emojis: [
+    // 庆祝类
+    { emoji: '🎉', name: '庆祝' },
+    { emoji: '🎊', name: '彩球' },
+    { emoji: '🎈', name: '气球' },
+    { emoji: '🎁', name: '礼物' },
+    { emoji: '💝', name: '心形礼物' },
+    { emoji: '🎀', name: '蝴蝶结' },
+    { emoji: '🎗️', name: '丝带' },
+    { emoji: '🏆', name: '奖杯' },
+    { emoji: '🥇', name: '金牌' },
+    { emoji: '🥈', name: '银牌' },
+    { emoji: '🥉', name: '铜牌' },
+    { emoji: '🎯', name: '靶心' },
+    
+    // 星星闪光类
+    { emoji: '⭐', name: '星星' },
+    { emoji: '🌟', name: '发光星' },
+    { emoji: '✨', name: '闪光' },
+    { emoji: '💫', name: '流星' },
+    { emoji: '⚡', name: '闪电' },
+    { emoji: '🔥', name: '火焰' },
+    { emoji: '💥', name: '爆炸' },
+    { emoji: '💢', name: '愤怒' },
+    { emoji: '💨', name: '疾风' },
+    { emoji: '🌈', name: '彩虹' },
+    
+    // 宝石钻石类
+    { emoji: '💎', name: '钻石' },
+    { emoji: '💍', name: '戒指' },
+    { emoji: '👑', name: '皇冠' },
+    { emoji: '🔱', name: '三叉戟' },
+    { emoji: '🎖️', name: '军功章' },
+    
+    // 金钱购物类
+    { emoji: '💰', name: '钱袋' },
+    { emoji: '💸', name: '飞钱' },
+    { emoji: '💴', name: '钞票' },
+    { emoji: '💵', name: '美元' },
+    { emoji: '💶', name: '欧元' },
+    { emoji: '💷', name: '英镑' },
+    { emoji: '💳', name: '信用卡' },
+    { emoji: '🛍️', name: '购物袋' },
+    { emoji: '🛒', name: '购物车' },
+    { emoji: '🏪', name: '商店' },
+    { emoji: '🏬', name: '百货商场' },
+    
+    // 评分点赞类
+    { emoji: '💯', name: '100分' },
+    { emoji: '👍', name: '点赞' },
+    { emoji: '👏', name: '鼓掌' },
+    { emoji: '🙌', name: '举手' },
+    { emoji: '✌️', name: '胜利' },
+    { emoji: '🤝', name: '握手' },
+    { emoji: '💪', name: '肌肉' },
+    { emoji: '🤩', name: '星星眼' },
+    { emoji: '😍', name: '爱心眼' },
+    { emoji: '🥰', name: '笑脸爱心' },
+    
+    // 爱心类
+    { emoji: '❤️', name: '红心' },
+    { emoji: '💕', name: '两颗心' },
+    { emoji: '💗', name: '成长的心' },
+    { emoji: '💖', name: '闪亮的心' },
+    { emoji: '💓', name: '跳动的心' },
+    { emoji: '💞', name: '旋转的心' },
+    { emoji: '💘', name: '丘比特之箭' },
+    { emoji: '💌', name: '情书' },
+    { emoji: '💋', name: '唇印' },
+    
+    // 食物类
+    { emoji: '🍰', name: '蛋糕' },
+    { emoji: '🎂', name: '生日蛋糕' },
+    { emoji: '🧁', name: '纸杯蛋糕' },
+    { emoji: '🍪', name: '饼干' },
+    { emoji: '🍩', name: '甜甜圈' },
+    { emoji: '🍭', name: '棒棒糖' },
+    { emoji: '🍬', name: '糖果' },
+    { emoji: '🍫', name: '巧克力' },
+    { emoji: '🍿', name: '爆米花' },
+    { emoji: '🍕', name: '披萨' },
+    { emoji: '🍔', name: '汉堡' },
+    { emoji: '🍟', name: '薯条' },
+    { emoji: '☕', name: '咖啡' },
+    { emoji: '🍹', name: '饮料' },
+    { emoji: '🍦', name: '冰淇淋' },
+    
+    // 自然类
+    { emoji: '🌸', name: '樱花' },
+    { emoji: '🌺', name: '扶桑花' },
+    { emoji: '🌻', name: '向日葵' },
+    { emoji: '🌹', name: '玫瑰' },
+    { emoji: '🌷', name: '郁金香' },
+    { emoji: '🌼', name: '小花' },
+    { emoji: '🌿', name: '草' },
+    { emoji: '🍀', name: '四叶草' },
+    { emoji: '🦋', name: '蝴蝶' },
+    { emoji: '🐝', name: '蜜蜂' },
+    
+    // 表情符号类
+    { emoji: '😊', name: '微笑' },
+    { emoji: '😄', name: '大笑' },
+    { emoji: '🤗', name: '拥抱' },
+    { emoji: '😎', name: '酷' },
+    { emoji: '🥳', name: '派对' },
+    { emoji: '🤑', name: '发财' },
+  ],
+  
+  // Twemoji CDN - Twitter 官方 Emoji
+  twemoji: [
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f389.png', // 🎉
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/2b50.png',  // ⭐
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f525.png', // 🔥
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4af.png', // 💯
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f48e.png', // 💎
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f451.png', // 👑
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f3c6.png', // 🏆
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4b0.png', // 💰
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f381.png', // 🎁
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f49d.png', // 💝
+  ],
+  
+  // OpenMoji - 开源彩色 Emoji（SVG 转 PNG）
+  openmoji: [
+    'https://raw.githubusercontent.com/hfg-gmuend/openmoji/master/color/72x72/1F389.png', // 🎉
+    'https://raw.githubusercontent.com/hfg-gmuend/openmoji/master/color/72x72/2B50.png',  // ⭐
+    'https://raw.githubusercontent.com/hfg-gmuend/openmoji/master/color/72x72/1F525.png', // 🔥
+    'https://raw.githubusercontent.com/hfg-gmuend/openmoji/master/color/72x72/1F4AF.png', // 💯
+    'https://raw.githubusercontent.com/hfg-gmuend/openmoji/master/color/72x72/1F48E.png', // 💎
+  ],
+  
+  // Iconify API - 150,000+ 免费图标
+  iconify: [
+    // 促销标签
+    'https://api.iconify.design/noto:glowing-star.svg',
+    'https://api.iconify.design/noto:fire.svg',
+    'https://api.iconify.design/noto:party-popper.svg',
+    'https://api.iconify.design/noto:shopping-bags.svg',
+    'https://api.iconify.design/noto:money-bag.svg',
+    'https://api.iconify.design/noto:gem-stone.svg',
+    'https://api.iconify.design/noto:crown.svg',
+    'https://api.iconify.design/noto:trophy.svg',
+    'https://api.iconify.design/noto:sparkles.svg',
+    'https://api.iconify.design/noto:dizzy.svg',
+    // 电商图标
+    'https://api.iconify.design/fluent-emoji-flat:shopping-cart.svg',
+    'https://api.iconify.design/fluent-emoji-flat:credit-card.svg',
+    'https://api.iconify.design/fluent-emoji-flat:gift.svg',
+    'https://api.iconify.design/fluent-emoji-flat:ribbon.svg',
+    'https://api.iconify.design/fluent-emoji-flat:fire.svg',
+  ],
+  
+  // 备用图标库（如果上述失败）
+  icons: [
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f389.png',
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/2b50.png',
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f525.png',
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f4af.png',
+    'https://cdnjs.cloudflare.com/ajax/libs/twemoji/14.0.2/72x72/1f48e.png',
+  ],
+};
+
 interface AtmosphereImageOptions {
   baseImage: string; // base64 图片
   text: string; // 氛围文案
@@ -220,6 +385,7 @@ export async function addWatermark(
 /**
  * 生成装饰性电商宣传图
  * 根据商品信息自动添加装饰元素（贴纸、徽章、标签等）
+ * 同时集成在线素材库
  */
 export async function generateDecorativeImage(
   options: DecorativeImageOptions
@@ -245,7 +411,7 @@ export async function generateDecorativeImage(
     const img = new Image();
     img.crossOrigin = 'anonymous';
     
-    img.onload = () => {
+    img.onload = async () => {
       canvas.width = img.width;
       canvas.height = img.height;
 
@@ -270,6 +436,16 @@ export async function generateDecorativeImage(
 
       // 添加光效
       drawGlowEffects(ctx, canvas.width, canvas.height);
+
+      // ✨ 新增：添加在线 Emoji 贴纸
+      drawOnlineEmojis(ctx, canvas.width, canvas.height);
+
+      // ✨ 新增：异步加载在线图标
+      try {
+        await drawOnlineIcons(ctx, canvas.width, canvas.height);
+      } catch (error) {
+        console.warn('在线图标加载失败，继续使用本地装饰', error);
+      }
 
       const result = canvas.toDataURL('image/png', 0.95);
       resolve(result);
@@ -724,6 +900,127 @@ function drawGiftBox(
   ctx.stroke();
   
   ctx.restore();
+}
+
+/**
+ * 绘制在线 Emoji 贴纸（扩充版）
+ */
+function drawOnlineEmojis(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number
+) {
+  // 随机选择 8-12 个 Emoji（增加数量）
+  const emojiCount = 8 + Math.floor(Math.random() * 5);
+  const selectedEmojis = [];
+  
+  for (let i = 0; i < emojiCount; i++) {
+    const emoji = ONLINE_STICKERS.emojis[Math.floor(Math.random() * ONLINE_STICKERS.emojis.length)];
+    selectedEmojis.push(emoji);
+  }
+
+  // 扩展位置，覆盖更多区域
+  const positions = [
+    // 四角
+    { x: 60, y: 150 },
+    { x: width - 60, y: 150 },
+    { x: 60, y: height - 150 },
+    { x: width - 60, y: height - 150 },
+    // 顶部
+    { x: width / 2 - 100, y: 100 },
+    { x: width / 2, y: 80 },
+    { x: width / 2 + 100, y: 100 },
+    // 底部
+    { x: 100, y: height - 200 },
+    { x: width - 100, y: height - 200 },
+    { x: width / 2, y: height - 180 },
+    // 中间
+    { x: 80, y: height / 2 },
+    { x: width - 80, y: height / 2 },
+  ];
+
+  selectedEmojis.forEach((emojiObj, index) => {
+    if (index < positions.length) {
+      const pos = positions[index];
+      // 随机大小：40-60px
+      const size = 40 + Math.floor(Math.random() * 20);
+      
+      ctx.save();
+      ctx.font = `${size}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+      ctx.shadowBlur = 8;
+      ctx.fillText(emojiObj.emoji, pos.x, pos.y);
+      ctx.restore();
+    }
+  });
+}
+
+/**
+ * 绘制在线图标（异步加载）- 多来源支持
+ */
+async function drawOnlineIcons(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number
+): Promise<void> {
+  const iconPositions = [
+    { x: 100, y: 120, size: 60 },
+    { x: width - 100, y: 120, size: 60 },
+    { x: width / 2, y: 100, size: 70 },
+    { x: 150, y: height - 120, size: 55 },
+    { x: width - 150, y: height - 120, size: 55 },
+  ];
+
+  // 组合多个图标库
+  const allIcons = [
+    ...ONLINE_STICKERS.twemoji,
+    ...ONLINE_STICKERS.iconify,
+  ];
+
+  // 随机选择图标（增加到 5 个）
+  const selectedIcons = [];
+  for (let i = 0; i < Math.min(5, iconPositions.length); i++) {
+    const icon = allIcons[Math.floor(Math.random() * allIcons.length)];
+    selectedIcons.push(icon);
+  }
+
+  // 异步加载并绘制图标
+  const promises = selectedIcons.map((iconUrl, index) => {
+    return new Promise<void>((resolve) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      
+      // 设置超时
+      const timeout = setTimeout(() => {
+        resolve(); // 超时也继续
+      }, 3000);
+      
+      img.onload = () => {
+        clearTimeout(timeout);
+        const pos = iconPositions[index];
+        if (pos) {
+          ctx.save();
+          ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+          ctx.shadowBlur = 10;
+          ctx.drawImage(img, pos.x - pos.size / 2, pos.y - pos.size / 2, pos.size, pos.size);
+          ctx.restore();
+        }
+        resolve();
+      };
+      
+      img.onerror = () => {
+        clearTimeout(timeout);
+        console.warn('图标加载失败:', iconUrl);
+        resolve(); // 加载失败也继续
+      };
+      
+      img.src = iconUrl;
+    });
+  });
+
+  await Promise.all(promises);
 }
 
 /**
