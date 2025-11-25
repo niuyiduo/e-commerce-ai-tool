@@ -2,12 +2,16 @@
 
 一个基于 Next.js 和火山引擎 AI 的电商营销素材生成工具，支持智能对话、装饰图片生成和产品讲解视频制作。
 
+🌐 **在线体验**：https://e-commerce-ai-tool.vercel.app  
+📦 **GitHub 仓库**：https://github.com/niuyiduo/e-commerce-ai-tool
+
 ## 📋 目录
 
 - [功能特性](#功能特性)
 - [技术栈](#技术栈)
 - [快速开始](#快速开始)
 - [环境配置](#环境配置)
+- [部署指南](#部署指南)
 - [功能使用说明](#功能使用说明)
 - [项目结构](#项目结构)
 - [开发指南](#开发指南)
@@ -17,6 +21,12 @@
 ### 1️⃣ AI 智能对话与图片生成
 
 - **商品图片上传**：支持点击上传和拖拽上传两种方式
+- **多模型智能切换** 🆕：
+  - Doubao-1.5-pro-32k - 高性能版本，适合复杂任务
+  - Doubao-1.5-pro-4k - 标准版本，快速响应
+  - Doubao-lite-32k - 轻量版本，经济实惠
+  - Doubao-lite-4k - 基础版本，快速处理
+  - 统一 API Key 管理多个模型端点
 - **AI 智能对话**：基于火山引擎大模型，理解商品图片内容
 - **快捷生成**：
   - 生成商品标题
@@ -28,7 +38,7 @@
   - 自动生成价格标签
   - 四角装饰边框
   - 光晕特效
-  - 自动添加"抖音电商前端训练营"水印
+  - 🎨 **优化水印显示**：右下角清晰可见的"抖音电商前端训练营"专属水印（18px 字体，0.9 透明度，带阴影效果）
 
 ### 2️⃣ 产品讲解视频生成
 
@@ -39,23 +49,39 @@
 - **字幕功能**：
   - 自动生成默认讲解字幕
   - 支持自定义每张图片的讲解文案
-  - 字幕自动叠加在视频底部
-- **视频预览与下载**：生成后可在线预览并下载
+  - 📝 **优化字幕显示**：14px 适中字体，视频底部 20px 位置，黑色背景白色文字，清晰易读
+- **视频预览与下载**：生成后可在线预览并下载 WebM 格式视频
 
 ### 3️⃣ 跨浏览器兼容
 
 - ✅ Chrome / Edge / 联想浏览器
 - ✅ 完整的拖拽上传支持
 - ✅ 视觉反馈（拖拽时高亮显示）
+- ✅ 移动端响应式适配
+
+### 4️⃣ 自动化部署 CI/CD 🆕
+
+- **GitHub 版本控制**：完整的 Git 工作流
+- **Vercel 自动部署**：
+  - 提交代码即触发构建
+  - 自动执行 npm install & build
+  - 自动部署到全球 CDN
+  - 1-3 分钟完成部署
+- **环境管理**：Production / Preview / Development 环境隔离
+- **一键回滚**：支持快速回滚到任意历史版本
+- **实时日志**：完整的构建和部署日志
 
 ## 🛠️ 技术栈
 
 - **框架**：Next.js 14 (App Router)
 - **语言**：TypeScript
-- **UI 样式**：Tailwind CSS
-- **AI 服务**：火山引擎豆包大模型
+- **UI 样式**：Tailwind CSS（响应式设计）
+- **AI 服务**：火山引擎豆包大模型（4 个模型可选）
 - **图像处理**：Canvas API
 - **视频生成**：MediaRecorder API
+- **部署平台**：Vercel (Edge Network)
+- **版本控制**：Git + GitHub
+- **CI/CD**：GitHub + Vercel 自动化部署
 
 ## 🚀 快速开始
 
@@ -80,8 +106,17 @@
    
    在项目根目录创建 `.env.local` 文件，添加以下内容：
    ```env
+   # API 密钥（所有模型共用）
    VOLCENGINE_API_KEY=你的火山引擎API密钥
-   VOLCENGINE_ENDPOINT_ID=你的端点ID
+   
+   # 默认端点 ID
+   VOLCENGINE_ENDPOINT_ID=你的默认端点ID
+   
+   # 多模型端点配置（可选）
+   VOLCENGINE_ENDPOINT_PRO_32K=你的Pro32K端点ID
+   VOLCENGINE_ENDPOINT_PRO_4K=你的Pro4K端点ID
+   VOLCENGINE_ENDPOINT_LITE_32K=你的Lite32K端点ID
+   VOLCENGINE_ENDPOINT_LITE_4K=你的Lite4K端点ID
    ```
 
 4. **启动开发服务器**
@@ -108,8 +143,84 @@
 
 | 变量名 | 说明 | 必填 |
 |--------|------|------|
-| `VOLCENGINE_API_KEY` | 火山引擎 API 访问密钥 | ✅ |
-| `VOLCENGINE_ENDPOINT_ID` | 火山引擎模型端点 ID | ✅ |
+| `VOLCENGINE_API_KEY` | 火山引擎 API 访问密钥（所有模型共用） | ✅ |
+| `VOLCENGINE_ENDPOINT_ID` | 默认模型端点 ID | ✅ |
+| `VOLCENGINE_ENDPOINT_PRO_32K` | Doubao-1.5-pro-32k 端点 ID | ⭕ |
+| `VOLCENGINE_ENDPOINT_PRO_4K` | Doubao-1.5-pro-4k 端点 ID | ⭕ |
+| `VOLCENGINE_ENDPOINT_LITE_32K` | Doubao-lite-32k 端点 ID | ⭕ |
+| `VOLCENGINE_ENDPOINT_LITE_4K` | Doubao-lite-4k 端点 ID | ⭕ |
+
+**注意**：如果不配置多模型端点，系统会使用默认端点 ID。
+
+## 🚀 部署指南
+
+### 方式一：Vercel 自动部署（推荐）
+
+#### 1. 推送到 GitHub
+
+```bash
+# 初始化 Git（如果还没有）
+git init
+git add .
+git commit -m "feat: 电商AI工具完整版"
+
+# 推送到 GitHub
+git remote add origin https://github.com/niuyiduo/e-commerce-ai-tool.git
+git push -u origin main
+```
+
+#### 2. 连接 Vercel
+
+1. 访问 [Vercel](https://vercel.com)
+2. 使用 GitHub 账号登录
+3. 点击 **Import Project**
+4. 选择 `e-commerce-ai-tool` 仓库
+5. Vercel 自动识别 Next.js 项目
+
+#### 3. 配置环境变量
+
+在 Vercel 项目设置中添加环境变量：
+- `VOLCENGINE_API_KEY`
+- `VOLCENGINE_ENDPOINT_ID`
+- `VOLCENGINE_ENDPOINT_PRO_32K`（可选）
+- `VOLCENGINE_ENDPOINT_PRO_4K`（可选）
+- `VOLCENGINE_ENDPOINT_LITE_32K`（可选）
+- `VOLCENGINE_ENDPOINT_LITE_4K`（可选）
+
+确保勾选 **Production**、**Preview**、**Development** 三个环境。
+
+#### 4. 部署
+
+点击 **Deploy**，等待 2-3 分钟即可完成部署。
+
+#### 5. CI/CD 自动化
+
+部署成功后，每次推送代码到 GitHub：
+```bash
+git add .
+git commit -m "更新说明"
+git push origin main
+```
+
+Vercel 会自动：
+1. 检测代码更新
+2. 自动构建项目
+3. 自动部署到生产环境
+4. 更新线上应用
+
+**全程自动化，无需手动操作！**
+
+### 方式二：本地部署
+
+```bash
+# 构建生产版本
+npm run build
+
+# 启动生产服务器
+npm start
+```
+
+---
 
 ## 📖 功能使用说明
 
@@ -119,14 +230,21 @@
    - 方式 1：点击虚线框区域，选择图片文件
    - 方式 2：直接拖拽图片到虚线框区域
 
-2. **与 AI 对话**
+2. **选择 AI 模型** 🆕
+   - 在"AI 模型选择"区域选择合适的模型
+   - Doubao-1.5-pro-32k：适合复杂商品描述
+   - Doubao-1.5-pro-4k：适合常规文案生成
+   - Doubao-lite-32k：适合简单标题生成
+   - Doubao-lite-4k：适合快速测试
+
+3. **与 AI 对话**
    - 在对话框中输入需求（如"生成商品标题"）
    - 或点击快捷按钮快速生成
 
-3. **生成装饰宣传图**
+4. **生成装饰宣传图**
    - 输入"生成装饰宣传图"或点击对应按钮
    - AI 会自动添加多种装饰元素
-   - 右下角自动添加水印
+   - 右下角自动添加"抖音电商前端训练营"水印（清晰可见）
    - 点击"📥 下载图片"保存到本地
 
 ### 视频生成模式
@@ -297,11 +415,16 @@ npm install --save-dev @types/react @types/react-dom
 
 ## 🎯 未来计划
 
+- [x] 多模型智能切换（已完成）
+- [x] 自动化 CI/CD 部署（已完成）
+- [x] 优化水印和字幕显示（已完成）
 - [ ] 支持更多图片装饰风格
 - [ ] 添加视频滤镜效果
 - [ ] 支持音频添加
 - [ ] 批量生成功能
-- [ ] 更多 AI 功能集成
+- [ ] 更多 AI 模型接入（文心一言、通义千问）
+- [ ] 用户系统和历史记录
+- [ ] 移动端 App 版本
 
 ## 📄 开源协议
 
@@ -309,6 +432,9 @@ npm install --save-dev @types/react @types/react-dom
 
 ---
 
-**作者**：抖音电商前端训练营  
+**作者**：niuyiduo  
+**项目**：抖音电商前端训练营课题二  
 **创建日期**：2025年11月  
-**版本**：1.0.0
+**最后更新**：2025年11月  
+**版本**：2.0.0  
+**在线地址**：https://e-commerce-ai-tool.vercel.app

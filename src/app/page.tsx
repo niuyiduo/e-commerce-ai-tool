@@ -480,12 +480,17 @@ export default function Home() {
               <div className="flex-1 overflow-y-auto mb-4 space-y-4">
                 {messages.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-gray-600 mb-4 font-medium">暂无对话，上传图片后开始聊天</p>
+                    <p className="text-gray-600 mb-4 font-medium">暂无对话,上传图片后开始聊天</p>
                     <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
                       {['生成商品标题', '生成商品卖点', '生成装饰宣传图'].map((text) => (
                         <button
                           key={text}
-                          onClick={() => productImage && setInputValue(text)}
+                          onClick={() => {
+                            if (productImage) {
+                              setInputValue(text);
+                              setTimeout(() => handleSendMessage(), 100);
+                            }
+                          }}
                           disabled={!productImage}
                           className="px-4 py-2 bg-indigo-100 text-indigo-800 font-medium rounded-lg hover:bg-indigo-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
@@ -539,6 +544,27 @@ export default function Home() {
                     </div>
                   </div>
                 )}
+
+                {/* 功能快捷按钮 - 每次对话后都显示 */}
+                {messages.length > 0 && productImage && !isLoading && (
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-200">
+                    <p className="text-sm text-gray-700 mb-3 font-medium">💡 您还可以尝试：</p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {['生成商品标题', '生成商品卖点', '生成装饰宣传图', '优化上述内容'].map((text) => (
+                        <button
+                          key={text}
+                          onClick={() => {
+                            setInputValue(text);
+                            setTimeout(() => handleSendMessage(), 100);
+                          }}
+                          className="px-3 py-2 bg-white text-indigo-700 text-sm font-medium rounded-lg hover:bg-indigo-100 transition-colors shadow-sm border border-indigo-200"
+                        >
+                          {text}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* 输入框 */}
@@ -548,7 +574,7 @@ export default function Home() {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  placeholder={productImage ? '输入您的需求，如：生成商品标题' : '请先上传商品图片'}
+                  placeholder={productImage ? '输入您的需求,或点击上方快捷按钮' : '请先上传商品图片'}
                   disabled={!productImage || isLoading}
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-800 placeholder:text-gray-500"
                 />
