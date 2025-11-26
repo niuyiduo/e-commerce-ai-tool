@@ -26,6 +26,8 @@ export default function Home() {
   const [generatedVideoUrl, setGeneratedVideoUrl] = useState<string>('');
   const [videoCaptions, setVideoCaptions] = useState<string[]>([]); // 视频字幕
   const [useCustomCaptions, setUseCustomCaptions] = useState(false); // 是否自定义字幕
+  const [voiceType, setVoiceType] = useState<'male' | 'female'>('female'); // 配音音色
+  const [enableVoice, setEnableVoice] = useState(false); // 是否启用配音
   
   // 功能模式：'image' 或 'video'
   const [mode, setMode] = useState<'image' | 'video'>('image');
@@ -255,6 +257,9 @@ export default function Home() {
         fps: 30,
         captions: useCustomCaptions && videoCaptions.length > 0 ? videoCaptions : undefined,
         autoGenerateCaptions: !useCustomCaptions || videoCaptions.length === 0,
+        // 新增：配音参数
+        enableVoice,
+        voiceType,
       });
       
       const url = URL.createObjectURL(videoBlob);
@@ -1242,6 +1247,72 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-700">
                       ✨ 将自动生成默认讲解字幕，如“欢迎了解我们的产品”、“产品特点展示”等
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* 配音设置 */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-gray-700">
+                    🎤 语音配音（可选）
+                  </label>
+                  <button
+                    onClick={() => setEnableVoice(!enableVoice)}
+                    className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                      enableVoice 
+                        ? 'bg-green-600 text-white' 
+                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                    }`}
+                  >
+                    {enableVoice ? '✅ 已启用' : '关闭'}
+                  </button>
+                </div>
+                
+                {enableVoice ? (
+                  <div className="space-y-3">
+                    <p className="text-xs text-gray-600 mb-2 font-medium">选择配音音色（使用火山引擎 TTS）</p>
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg mb-3">
+                      <p className="text-xs text-green-700">
+                        ✨ <strong>使用火山引擎语音合成</strong>：配音将<strong>直接录制到视频中</strong>，音色选择有效，生成的视频文件自带音频！
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <button
+                        onClick={() => setVoiceType('male')}
+                        className={`px-4 py-3 rounded-lg border-2 transition-all ${
+                          voiceType === 'male'
+                            ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold'
+                            : 'border-gray-300 hover:border-blue-300 text-gray-700'
+                        }`}
+                      >
+                        👨 男声
+                      </button>
+                      <button
+                        onClick={() => setVoiceType('female')}
+                        className={`px-4 py-3 rounded-lg border-2 transition-all ${
+                          voiceType === 'female'
+                            ? 'border-pink-500 bg-pink-50 text-pink-700 font-semibold'
+                            : 'border-gray-300 hover:border-pink-300 text-gray-700'
+                        }`}
+                      >
+                        👩 女声
+                      </button>
+                    </div>
+                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                      <p className="text-sm text-green-700">
+                        ✨ 已启用 <span className="font-semibold">
+                          {voiceType === 'male' && '男声（通用）'}
+                          {voiceType === 'female' && '女声（通用）'}
+                        </span> AI配音，将为字幕添加语音讲解
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
+                    <p className="text-sm text-gray-600">
+                      🔇 当前未启用配音，视频将仅显示字幕无声音
                     </p>
                   </div>
                 )}

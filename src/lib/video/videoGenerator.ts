@@ -10,6 +10,8 @@ interface VideoGeneratorOptions {
   fps?: number; // 帧率，默认 30
   captions?: string[]; // 每张图片对应的讲解文案（可选）
   autoGenerateCaptions?: boolean; // 是否自动生成默认讲解
+  enableVoice?: boolean; // 是否启用语音配音（可选）
+  voiceType?: 'male' | 'female' | 'child'; // 配音音色（可选）
 }
 
 /**
@@ -26,7 +28,9 @@ export async function generateVideo(
     transition = 'fade',
     fps = 30,
     captions = [],
-    autoGenerateCaptions = true
+    autoGenerateCaptions = true,
+    enableVoice = false,  // 新增：是否启用配音
+    voiceType = 'female'  // 新增：配音音色
   } = options;
 
   // 验证参数
@@ -121,8 +125,14 @@ export async function generateVideo(
     frames.push(ctx.getImageData(0, 0, canvas.width, canvas.height));
   }
 
-  // 使用 MediaRecorder 生成视频
-  const videoBlob = await createVideoFromFrames(frames, canvas.width, canvas.height, fps);
+  // 使用 MediaRecorder 生成视频（带配音）
+  const videoBlob = await createVideoFromFrames(
+    frames, 
+    canvas.width, 
+    canvas.height, 
+    fps,
+    enableVoice ? { captions: finalCaptions, voiceType } : undefined
+  );
   
   return videoBlob;
 }
@@ -143,15 +153,15 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 /**
- * 从帧数据创建视频
+ * 从帧数据创建视频（带音频支持）
  */
 async function createVideoFromFrames(
   frames: ImageData[],
   width: number,
   height: number,
-  fps: number
+  fps: number,
+  voiceOptions?: { captions: string[]; voiceType: 'male' | 'female' | 'child' }
 ): Promise<Blob> {
-  // 创建 Canvas Stream
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -161,11 +171,32 @@ async function createVideoFromFrames(
     throw new Error('Canvas context not available');
   }
 
+  const videoStream = canvas.captureStream(fps);
+  
+  // 如果启用配音，生成音频流并合并
+  let finalStream = videoStream;
+  if (voiceOptions) {
+    try {
+      const audioStream = await generateAudioStream(voiceOptions.captions, voiceOptions.voiceType, frames.length / fps);
+      if (audioStream) {
+        // 合并视频流和音频流
+        const videoTrack = videoStream.getVideoTracks()[0];
+        const audioTrack = audioStream.getAudioTracks()[0];
+        finalStream = new MediaStream([videoTrack, audioTrack]);
+      }
+    } catch (error) {
+      console.warn('音频流生成失败，将生成无声视频:', error);
+    }
+  }
+  
   // 创建 MediaRecorder
-  const stream = canvas.captureStream(fps);
-  const mediaRecorder = new MediaRecorder(stream, {
-    mimeType: 'video/webm;codecs=vp9',
-    videoBitsPerSecond: 2500000, // 2.5 Mbps
+  const mimeType = finalStream.getAudioTracks().length > 0 
+    ? 'video/webm;codecs=vp9,opus'
+    : 'video/webm;codecs=vp9';
+    
+  const mediaRecorder = new MediaRecorder(finalStream, {
+    mimeType: mimeType,
+    videoBitsPerSecond: 2500000,
   });
 
   const chunks: Blob[] = [];
@@ -198,7 +229,10 @@ async function createVideoFromFrames(
         frameIndex++;
         setTimeout(playFrame, frameDuration);
       } else {
-        mediaRecorder.stop();
+        // 等待语音播放完成
+        setTimeout(() => {
+          mediaRecorder.stop();
+        }, 500);
       }
     };
 
@@ -402,4 +436,185 @@ function drawCaption(
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
   ctx.fillText(text, width / 2, y + bgHeight / 2);
+}
+
+/**
+ * 同步播放字幕配音（与视频录制同步）
+ * 
+ * @param captions - 字幕数组
+ * @param voiceType - 音色类型
+ * @param totalDuration - 总时长（秒）
+ */
+async function playSyncedVoice(
+  captions: string[],
+  voiceType: 'male' | 'female' | 'child',
+  totalDuration: number
+): Promise<void> {
+  // 检查浏览器支持
+  if (!('speechSynthesis' in window)) {
+    console.warn('浏览器不支持 Web Speech API，跳过配音');
+    return;
+  }
+
+  // 清空之前的语音
+  speechSynthesis.cancel();
+
+  // 计算每条字幕的时长
+  const durationPerCaption = totalDuration / captions.length;
+
+  // 逐条播放字幕配音
+  for (const caption of captions) {
+    await new Promise<void>((resolve) => {
+      const utterance = new SpeechSynthesisUtterance(caption);
+      
+      // 设置音色参数
+      utterance.lang = 'zh-CN';
+      utterance.rate = 0.9; // 语速
+      utterance.pitch = voiceType === 'child' ? 1.5 : 1; // 童声音调高
+      utterance.volume = 1;
+      
+      // 选择音色（根据 voiceType 参数）
+      const voices = speechSynthesis.getVoices();
+      let selectedVoice: SpeechSynthesisVoice | null = null;
+      
+      if (voiceType === 'male') {
+        selectedVoice = voices.find(v => 
+          v.lang.includes('zh') && (v.name.includes('Male') || v.name.includes('男') || v.name.toLowerCase().includes('male'))
+        ) || null;
+      } else if (voiceType === 'female') {
+        selectedVoice = voices.find(v => 
+          v.lang.includes('zh') && (v.name.includes('Female') || v.name.includes('女') || v.name.toLowerCase().includes('female'))
+        ) || null;
+      } else if (voiceType === 'child') {
+        selectedVoice = voices.find(v => 
+          v.lang.includes('zh') && v.name.includes('小')
+        ) || null;
+      }
+      
+      // 如果找不到指定类型，尝试找任何中文音色
+      if (!selectedVoice) {
+        selectedVoice = voices.find(v => v.lang.includes('zh')) || voices[0];
+      }
+      
+      if (selectedVoice) {
+        utterance.voice = selectedVoice;
+      }
+
+      // 播放结束后继续下一条
+      utterance.onend = () => {
+        resolve();
+      };
+
+      utterance.onerror = () => {
+        console.warn('语音合成失败，跳过当前字幕');
+        resolve();
+      };
+
+      // 开始播放
+      speechSynthesis.speak(utterance);
+    });
+  }
+}
+
+/**
+ * 生成音频流（使用火山引擎 TTS + Web Audio API）
+ * 
+ * @param captions - 字幕数组
+ * @param voiceType - 音色类型
+ * @param totalDuration - 总时长（秒）
+ * @returns MediaStream | null
+ */
+async function generateAudioStream(
+  captions: string[],
+  voiceType: 'male' | 'female' | 'child',
+  totalDuration: number
+): Promise<MediaStream | null> {
+  try {
+    console.log('开始生成音频流...');
+    console.log('字幕:', captions);
+    console.log('音色:', voiceType);
+    
+    // 创建音频上下文
+    const audioContext = new AudioContext();
+    const destination = audioContext.createMediaStreamDestination();
+    
+    // 合并所有字幕文本
+    const fullText = captions.join('。 '); // 用句号分隔
+    console.log('完整文本:', fullText);
+    
+    // 调用后端 TTS API
+    const response = await fetch('/api/tts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        text: fullText,
+        voiceType: voiceType,
+      }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.error('TTS API 错误:', errorData);
+      throw new Error(`TTS API 调用失败: ${errorData.error} - ${errorData.details}`);
+    }
+    
+    const responseData = await response.json();
+    console.log('TTS API 响应:', responseData);
+    
+    if (!responseData.success || !responseData.audioData) {
+      throw new Error('TTS API 返回数据格式错误');
+    }
+    
+    const { audioData } = responseData;
+    
+    // 将 Base64 音频转换为 ArrayBuffer
+    const audioBuffer = await base64ToArrayBuffer(audioData);
+    console.log('ArrayBuffer 大小:', audioBuffer.byteLength);
+    
+    // 解码音频数据
+    const decodedAudio = await audioContext.decodeAudioData(audioBuffer);
+    console.log('音频时长:', decodedAudio.duration, '秒');
+    
+    // 创建音频源
+    const source = audioContext.createBufferSource();
+    source.buffer = decodedAudio;
+    source.connect(destination);
+    
+    // 开始播放
+    source.start(0);
+    
+    console.log('音频流生成成功！');
+    // 返回音频流
+    return destination.stream;
+    
+  } catch (error) {
+    console.error('音频流生成失败:', error);
+    alert(`配音生成失败: ${error instanceof Error ? error.message : '未知错误'}\n\n将生成无声视频`);
+    return null;
+  }
+}
+
+/**
+ * 将 Base64 字符串转换为 ArrayBuffer
+ */
+function base64ToArrayBuffer(base64: string): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      // 移除 data:audio/mp3;base64, 前缀（如果有）
+      const base64Data = base64.replace(/^data:audio\/\w+;base64,/, '');
+      
+      // 解码 Base64
+      const binaryString = atob(base64Data);
+      const len = binaryString.length;
+      const bytes = new Uint8Array(len);
+      
+      for (let i = 0; i < len; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      
+      resolve(bytes.buffer);
+    } catch (error) {
+      reject(error);
+    }
+  });
 }
