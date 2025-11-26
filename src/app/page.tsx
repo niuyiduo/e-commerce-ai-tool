@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { addWatermark, generateDecorativeImage } from '@/lib/canvas/imageGenerator';
+import { addWatermark, generateDecorativeImage, generateSmartDecorativeImage } from '@/lib/canvas/imageGenerator';
 import { generateVideo, downloadVideo } from '@/lib/video/videoGenerator';
 
 interface Message {
@@ -37,12 +37,30 @@ export default function Home() {
   // AI 模型配置
   const [selectedModel, setSelectedModel] = useState<string>('Doubao-1.5-pro-32k');
   
+  // 新增：两步式装饰图状态
+  const [showDecorativeDialog, setShowDecorativeDialog] = useState(false); // 显示装饰模式选择对话框
+  const [decorativeMode, setDecorativeMode] = useState<'normal' | 'advanced'>('normal'); // 装饰模式
+  const [stepOneImage, setStepOneImage] = useState<string>(''); // 第一步生成的图片
+  const [showBorderDialog, setShowBorderDialog] = useState(false); // 显示边框选择对话框
+  const [selectedBorderStyle, setSelectedBorderStyle] = useState<'simple' | 'guochao' | 'gradient' | 'luxury'>('simple');
+  const [productInfo, setProductInfo] = useState<{
+    name: string;
+    origin: string;
+    highlight: string;
+    description: string;
+  }>({ name: '', origin: '', highlight: '', description: '' });
+  const [showUpgradeDialog, setShowUpgradeDialog] = useState(false); // 显示升级模型对话框
+  const [dissatisfactionCount, setDissatisfactionCount] = useState(0); // 不满意次数计数
+  const [userFeedback, setUserFeedback] = useState(''); // 用户反馈内容
+  
   // 可用的豆包模型列表
   const availableModels = [
     { id: 'Doubao-1.5-pro-32k', name: 'Doubao-1.5-pro-32k', description: '高性能版本，适合复杂任务' },
     { id: 'Doubao-1.5-pro-4k', name: 'Doubao-1.5-pro-4k', description: '标准版本，快速响应' },
     { id: 'Doubao-lite-32k', name: 'Doubao-lite-32k', description: '轻量版本，经济实惠' },
     { id: 'Doubao-lite-4k', name: 'Doubao-lite-4k', description: '基础版本，快速处理' },
+    { id: 'Doubao-1.5-vision-pro', name: 'Doubao-vision', description: '多模态模型，支持图文理解' },
+    { id: 'Doubao-1.5-vision-thinking-pro', name: 'Doubao-thinking-vision', description: '思维链多模态，更强推理能力' },
   ];
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -51,6 +69,11 @@ export default function Home() {
       const reader = new FileReader();
       reader.onload = (event) => {
         setProductImage(event.target?.result as string);
+        // 重置所有相关状态（新图片 = 新一轮）
+        setDissatisfactionCount(0);
+        setProductInfo({ name: '', origin: '', highlight: '', description: '' });
+        setGeneratedImage('');
+        setStepOneImage('');
       };
       reader.readAsDataURL(file);
     }
@@ -99,6 +122,11 @@ export default function Home() {
       const reader = new FileReader();
       reader.onload = (event) => {
         setProductImage(event.target?.result as string);
+        // 重置所有相关状态（新图片 = 新一轮）
+        setDissatisfactionCount(0);
+        setProductInfo({ name: '', origin: '', highlight: '', description: '' });
+        setGeneratedImage('');
+        setStepOneImage('');
       };
       reader.readAsDataURL(file);
     } else {
@@ -251,6 +279,32 @@ export default function Home() {
     link.click();
   };
 
+  // 新增：提取信息的辅助函数（过滤无效内容）
+  const extractInfo = (text: string, keywords: string[]): string => {
+    for (const keyword of keywords) {
+      const regex = new RegExp(`${keyword}[:：「]?\\s*([^。，；」\n]{1,50})`, 'i');
+      const match = text.match(regex);
+      if (match) {
+        let extracted = match[1].trim();
+        
+        // 处理"保持不变"等标记，提取括号前的内容
+        const keepAsIsMatch = extracted.match(/^(.+?)[（(]保持|不变|无需修改|仅需调整/);
+        if (keepAsIsMatch) {
+          extracted = keepAsIsMatch[1].trim();
+        }
+        
+        // 过滤无效内容（但不过滤"保持"、"不变"等保留指令）
+        const invalidTerms = ['未显示', '暂无', '未知', '不明确', '不清楚', 'XXX', '待定', '无法确定', '无法识别'];
+        const isInvalid = invalidTerms.some(term => extracted === term || extracted.startsWith(term));
+        if (isInvalid) {
+          return ''; // 返回空字符串，不显示装饰框
+        }
+        return extracted;
+      }
+    }
+    return '';
+  };
+
   const handleSendMessage = async () => {
     if (!inputValue.trim() || !productImage) return;
 
@@ -275,41 +329,8 @@ export default function Home() {
       
       // 判断是否需要生成装饰图
       if (inputValue.includes('装饰图') || inputValue.includes('宣传图') || inputValue.includes('贴图')) {
-        // 生成装饰性电商宣传图
-        setMessages((prev) => [
-          ...prev,
-          { role: 'assistant', content: `🎨 正在生成装饰性宣传图...`, type: 'text' }
-        ]);
-
-        try {
-          const decorativeImage = await generateDecorativeImage({
-            baseImage: productImage,
-            productInfo: data.content,
-            style: 'promotional',
-            addStickers: true,
-            addBadges: true,
-            addPriceTag: true,
-          });
-
-          const finalImage = await addWatermark(decorativeImage);
-          setGeneratedImage(finalImage);
-
-          setMessages((prev) => [
-            ...prev.slice(0, -1),
-            { 
-              role: 'assistant', 
-              content: `✅ 装饰宣传图生成成功！\n\n已添加多种装饰元素提升宣传效果。`, 
-              type: 'image',
-              imageUrl: finalImage 
-            }
-          ]);
-        } catch (error) {
-          console.error('生成装饰图失败:', error);
-          setMessages((prev) => [
-            ...prev,
-            { role: 'assistant', content: '装饰图生成失败，请重试。', type: 'text' }
-          ]);
-        }
+        // 显示装饰模式选择对话框
+        setShowDecorativeDialog(true);
       } else {
         // 普通文字回复
         setMessages((prev) => [...prev, { role: 'assistant', content: data.content, type: 'text' }]);
@@ -332,6 +353,480 @@ export default function Home() {
     link.href = generatedImage;
     link.download = `氛围图_${Date.now()}.png`;
     link.click();
+  };
+
+  // 新增：处理普通装饰模式
+  const handleNormalDecorative = async () => {
+    setShowDecorativeDialog(false);
+    setMessages((prev) => [
+      ...prev,
+      { role: 'assistant', content: `🎨 正在生成普通装饰宣传图...`, type: 'text' }
+    ]);
+
+    try {
+      const decorativeImage = await generateDecorativeImage({
+        baseImage: productImage,
+        productInfo: '',
+        style: 'promotional',
+        addStickers: true,
+        addBadges: true,
+        addPriceTag: true,
+      });
+
+      const finalImage = await addWatermark(decorativeImage);
+      setGeneratedImage(finalImage);
+
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { 
+          role: 'assistant', 
+          content: `✅ 普通装饰宣传图生成成功！
+
+已添加：
+🏷️ 促销徽章（新品/热卖/特价）
+✨ 100+种装饰贴纸
+🌟 价格标签
+🔶 四角边框
+☀️ 光效装饰`, 
+          type: 'image',
+          imageUrl: finalImage 
+        }
+      ]);
+    } catch (error) {
+      console.error('生成装饰图失败:', error);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: '装饰图生成失败，请重试。', type: 'text' }
+      ]);
+    }
+  };
+
+  // 新增：处理高级定制装饰模式（两步式：文字说明 + 边框选择）
+  const handleAdvancedDecorative = async () => {
+    // 检查当前模型是否支持图文理解
+    const isVisionModel = selectedModel.includes('vision');
+    
+    if (!isVisionModel) {
+      // 当前模型不支持，提示切换
+      setMessages((prev) => [
+        ...prev,
+        { 
+          role: 'assistant', 
+          content: `⚠️ 高级定制装饰需要使用支持图文理解的多模态模型。
+
+当前模型：**${selectedModel}**（仅支持文本）
+
+请切换到以下模型之一：
+🔹 **Doubao-vision** - 多模态模型
+🔸 **Doubao-thinking-vision** - 思维链多模态（推荐）`, 
+          type: 'text' 
+        }
+      ]);
+      setShowDecorativeDialog(false);
+      return;
+    }
+
+    setShowDecorativeDialog(false);
+    setMessages((prev) => [
+      ...prev,
+      { role: 'assistant', content: `🤖 正在启动高级AI分析（${selectedModel === 'Doubao-1.5-vision-thinking-pro' ? 'Doubao-thinking-vision 思维链模型' : 'Doubao-vision 多模态模型'}）...`, type: 'text' }
+    ]);
+
+    try {
+      // 第一步：调用当前选择的多模态模型分析图片
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `请仔细分析这张商品图片，提供以下信息：
+
+1. 商品名称（如果图片中明确显示或可以准确识别）
+2. 产地/来源（如果图片中有相关信息）
+3. 主要卖点（根据图片内容提取）
+4. 简短说明（不超过50字，**请用自然语言描述，不要带“说明：”等标签**）
+
+重要规则：
+- 如果某个信息在图片中没有明确显示或无法确定，请回答"未显示"
+- 不要编造或猜测信息，只描述图片中真实存在的内容
+- 如果图片上有文字，优先使用图片上的文字
+
+请用清晰的格式回答：
+商品名：XXX
+产地：XXX或未显示
+卖点：XXX
+说明：这是一款...（直接写描述文字，不要重复“说明：”）`,
+          productImage,
+          history: messages,
+          model: selectedModel, // 使用当前选择的模型
+        }),
+      });
+
+      const data = await response.json();
+      const aiResponse = data.content;
+      
+      // 提取结构化信息
+      const parsedInfo = {
+        name: extractInfo(aiResponse, ['商品名', '名称', '产品']) || '优质商品',
+        origin: extractInfo(aiResponse, ['产地', '来源', '供应']) || '精选供应',
+        highlight: extractInfo(aiResponse, ['卖点', '特点', '优势']) || '品质保障',
+        description: extractInfo(aiResponse, ['说明', '简介']) || aiResponse.substring(0, 50) || '精选好物，值得拥有'
+      };
+      
+      setProductInfo(parsedInfo);
+
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { 
+          role: 'assistant', 
+          content: `🧠 AI分析完成！
+
+🏷️ 商品名称：${parsedInfo.name}
+📍 产地信息：${parsedInfo.origin}
+✨ 主要卖点：${parsedInfo.highlight}
+📝 简短说明：${parsedInfo.description.substring(0, 30)}...
+
+正在生成第一步装饰图（文字说明 + 少量贴图）...`, 
+          type: 'text'
+        }
+      ]);
+
+      // 生成第一步：带文字说明的装饰图（不加边框）
+      const smartImage = await generateSmartDecorativeImage({
+        baseImage: productImage,
+        productName: parsedInfo.name,
+        origin: parsedInfo.origin,
+        highlight: parsedInfo.highlight,
+        description: parsedInfo.description,
+        addBorder: false,
+      });
+
+      const finalImage = await addWatermark(smartImage);
+      setStepOneImage(finalImage);
+      setGeneratedImage(finalImage);
+
+      setMessages((prev) => [
+        ...prev,
+        { 
+          role: 'assistant', 
+          content: `✅ 第一步完成！
+
+已添加：
+🏷️ 左侧竖排商品名
+📍 产地标签
+✔️ 卖点标签
+📝 右下角简要说明
+✨ 少量精致贴纸
+
+是否需要添加边框装饰？`, 
+          type: 'image',
+          imageUrl: finalImage 
+        }
+      ]);
+
+      // 显示边框选择对话框
+      setShowBorderDialog(true);
+      
+      // 首次生成高级装饰时重置计数（新一轮高级装饰生成）
+      if (!stepOneImage) {
+        setDissatisfactionCount(0);
+      }
+
+    } catch (error) {
+      console.error('生成高级装饰图失败:', error);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: '高级装饰图生成失败，请重试。', type: 'text' }
+      ]);
+    }
+  };
+
+  // 新增：添加边框的处理函数
+  const handleAddBorder = async () => {
+    if (!stepOneImage) return;
+
+    setShowBorderDialog(false);
+    setMessages((prev) => [
+      ...prev,
+      { role: 'assistant', content: `🖌️ 正在添加${getBorderStyleName(selectedBorderStyle)}边框...`, type: 'text' }
+    ]);
+
+    try {
+      // 生成第二步图片（带边框）
+      const borderedImage = await generateSmartDecorativeImage({
+        baseImage: productImage,
+        productName: productInfo.name,
+        origin: productInfo.origin,
+        highlight: productInfo.highlight,
+        description: productInfo.description,
+        addBorder: true,
+        borderStyle: selectedBorderStyle,
+      });
+
+      const finalImage = await addWatermark(borderedImage);
+      setGeneratedImage(finalImage);
+
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { 
+          role: 'assistant', 
+          content: `✅ 高级定制装饰图完成！\n\n已添加${getBorderStyleName(selectedBorderStyle)}边框装饰。`, 
+          type: 'image',
+          imageUrl: finalImage 
+        }
+      ]);
+      // 注意：不重置计数，保持对当前图片的修改次数记录
+    } catch (error) {
+      console.error('添加边框失败:', error);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: '边框添加失败，请重试。', type: 'text' }
+      ]);
+    }
+  };
+
+  // 新增：获取边框风格名称
+  const getBorderStyleName = (style: string): string => {
+    const names: Record<string, string> = {
+      simple: '简约',
+      guochao: '国潮',
+      gradient: '渐变',
+      luxury: '豪华',
+    };
+    return names[style] || '简约';
+  };
+
+  // 新增：跳过边框，直接完成
+  const handleSkipBorder = () => {
+    setShowBorderDialog(false);
+    setMessages((prev) => [
+      ...prev,
+      { role: 'assistant', content: '✅ 高级定制装饰图已完成，可以下载使用了！', type: 'text' }
+    ]);
+    // 注意：不重置计数，关闭对话框不影响当前图片的修改次数
+  };
+
+  // 新增：升级到思维链模型重新分析
+  const handleUpgradeModel = async () => {
+    setShowUpgradeDialog(false);
+    setShowBorderDialog(false);
+    setMessages((prev) => [
+      ...prev,
+      { role: 'assistant', content: `🧠 正在升级到 Doubao-thinking-vision 模型，进行更深入的分析...`, type: 'text' }
+    ]);
+
+    try {
+      // 使用思维链模型重新分析
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: '请更深入分析这张商品图片，提供更详细的信息：1.精确的商品名称 2.详细的产地信息 3.多个卖点（分点列举） 4.更具吸引力的说明（不超过80字）。请用清晰的格式回答。',
+          productImage,
+          history: messages,
+          model: 'Doubao-1.5-vision-thinking-pro', // 使用思维链模型
+        }),
+      });
+
+      const data = await response.json();
+      const aiResponse = data.content;
+      
+      // 提取更详细的信息
+      const parsedInfo = {
+        name: extractInfo(aiResponse, ['商品名', '名称', '产品']) || '优质商品',
+        origin: extractInfo(aiResponse, ['产地', '来源', '供应']) || '精选供应',
+        highlight: extractInfo(aiResponse, ['卖点', '特点', '优势']) || '品质保障',
+        description: extractInfo(aiResponse, ['说明', '简介']) || aiResponse.substring(0, 80) || '精选好物，值得拥有'
+      };
+      
+      setProductInfo(parsedInfo);
+
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { 
+          role: 'assistant', 
+          content: `🌟 思维链模型分析完成！
+
+🏷️ 商品名称：${parsedInfo.name}
+📍 产地信息：${parsedInfo.origin}
+✨ 主要卖点：${parsedInfo.highlight}
+📝 详细说明：${parsedInfo.description}
+
+正在生成更精美的装饰图...`, 
+          type: 'text'
+        }
+      ]);
+
+      // 生成更精美的装饰图
+      const smartImage = await generateSmartDecorativeImage({
+        baseImage: productImage,
+        productName: parsedInfo.name,
+        origin: parsedInfo.origin,
+        highlight: parsedInfo.highlight,
+        description: parsedInfo.description,
+        addBorder: true, // 默认添加边框
+        borderStyle: 'luxury', // 使用豪华边框
+      });
+
+      const finalImage = await addWatermark(smartImage);
+      setGeneratedImage(finalImage);
+
+      setMessages((prev) => [
+        ...prev,
+        { 
+          role: 'assistant', 
+          content: `✨ 思维链模型生成完成！\n\n基于更深入的AI分析，已为您生成更精美、更详细的装饰图（自动添加豪华边框）。`, 
+          type: 'image',
+          imageUrl: finalImage 
+        }
+      ]);
+
+    } catch (error) {
+      console.error('升级模型生成失败:', error);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: '升级模型生成失败，请重试。', type: 'text' }
+      ]);
+    }
+  };
+
+  // 新增：取消升级
+  const handleCancelUpgrade = () => {
+    setShowUpgradeDialog(false);
+  };
+
+  // 新增：处理用户不满意反馈
+  const handleDissatisfaction = async () => {
+    const newCount = dissatisfactionCount + 1;
+    setDissatisfactionCount(newCount);
+
+    // 判断当前模型类型
+    const isThinkingVision = selectedModel === 'Doubao-1.5-vision-thinking-pro';
+    
+    // 如果是普通 vision 模型且已经3次不满意，提示升级
+    if (!isThinkingVision && newCount >= 3) {
+      setShowUpgradeDialog(true);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'user', content: `不满意原因：${userFeedback}` },
+        { 
+          role: 'assistant', 
+          content: `💡 检测到您已连续3次对结果不满意。\n\n建议升级到 **Doubao-thinking-vision** 思维链模型，获得更好的效果！`, 
+          type: 'text' 
+        }
+      ]);
+      return;
+    }
+
+    // 前3次，根据用户反馈重新生成
+    if (!userFeedback.trim()) {
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: '请告诉我哪里需要修改，我会为您重新生成。', type: 'text' }
+      ]);
+      return;
+    }
+
+    // 将用户反馈添加到对话历史
+    const userMessage = { role: 'user' as const, content: `我对当前的装饰图不满意，需要修改：${userFeedback}。请根据我的要求重新分析图片并生成。` };
+    setMessages((prev) => [...prev, userMessage]);
+
+    setMessages((prev) => [
+      ...prev,
+      { role: 'assistant', content: `🔄 好的，我明白了。正在根据您的要求“${userFeedback}”重新分析和生成...`, type: 'text' }
+    ]);
+
+    try {
+      // 重新调用AI分析，带上完整的对话历史
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: `根据用户的修改要求重新分析图片。
+
+用户要求：${userFeedback}
+
+请仔细观察图片，并根据用户的具体要求调整以下信息：
+1.商品名称
+2.产地/来源
+3.主要卖点
+4.简短说明（**请用自然语言描述，不要带“说明：”等标签**）
+
+重要规则：
+- **只修改用户明确要求修改的部分**
+- 如果用户只是要求调整格式、字体大小、位置等**样式问题**，请保持原内容不变，在回答中说明"内容保持不变"
+- 如果用户要求修改某项内容，才修改该项的文字
+- 如果某个信息在图片中没有显示，请回答"未显示"
+- 不要编造或猜测，只描述图片中真实存在的内容
+
+请用清晰的格式回答：
+- 如果内容不变："商品名：[原内容]（保持不变）"
+- 如果内容修改："商品名：[新内容]"
+- 如果没有该信息："产地：未显示"
+- **说明字段**：直接写自然语言描述，例如"说明：这是一款新鲜的柠檬精蔬菜..."
+
+示例：
+用户说"商品名的字太大了" → 回答"商品名：雪莲果（保持不变，仅需调整显示样式）"
+用户说"商品名改成云南雪莲果" → 回答"商品名：云南雪莲果"`,
+          productImage,
+          history: [...messages, userMessage], // 传入完整的对话历史
+          model: selectedModel, // 使用当前选择的模型
+        }),
+      });
+
+      const data = await response.json();
+      const aiResponse = data.content;
+      
+      const parsedInfo = {
+        name: extractInfo(aiResponse, ['商品名', '名称', '产品']) || productInfo.name || '优质商品',
+        origin: extractInfo(aiResponse, ['产地', '来源', '供应']) || productInfo.origin || '精选供应',
+        highlight: extractInfo(aiResponse, ['卖点', '特点', '优势']) || productInfo.highlight || '品质保障',
+        description: extractInfo(aiResponse, ['说明', '简介']) || aiResponse.substring(0, 50) || productInfo.description || '精选好物，值得拥有'
+      };
+      
+      setProductInfo(parsedInfo);
+
+      // 重新生成装饰图
+      const smartImage = await generateSmartDecorativeImage({
+        baseImage: productImage,
+        productName: parsedInfo.name,
+        origin: parsedInfo.origin,
+        highlight: parsedInfo.highlight,
+        description: parsedInfo.description,
+        addBorder: false,
+      });
+
+      const finalImage = await addWatermark(smartImage);
+      setStepOneImage(finalImage);
+      setGeneratedImage(finalImage);
+
+      setMessages((prev) => [
+        ...prev.slice(0, -1),
+        { 
+          role: 'assistant', 
+          content: `✅ 已根据您的要求重新生成！（第${newCount}次修改${isThinkingVision ? '' : ' / 共3次'}）
+
+📝 修改内容：
+🏷️ 商品名称：${parsedInfo.name || '未识别到'}
+📍 产地信息：${parsedInfo.origin || '未识别到'}
+✨ 主要卖点：${parsedInfo.highlight || '未识别到'}
+📝 图片说明：${parsedInfo.description || '未识别到'}
+
+${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedback.includes('位置') ? '🖌️ 样式调整已应用，系统自动调整了显示样式。\n\n' : ''}如果仍不满意，请继续告诉我需要调整的地方。`, 
+          type: 'image',
+          imageUrl: finalImage 
+        }
+      ]);
+
+      // 清空用户反馈
+      setUserFeedback('');
+
+    } catch (error) {
+      console.error('重新生成失败:', error);
+      setMessages((prev) => [
+        ...prev,
+        { role: 'assistant', content: '重新生成失败，请重试。', type: 'text' }
+      ]);
+    }
   };
 
   return (
@@ -436,7 +931,11 @@ export default function Home() {
                     {availableModels.map((model) => (
                       <div
                         key={model.id}
-                        onClick={() => setSelectedModel(model.id)}
+                        onClick={() => {
+                          setSelectedModel(model.id);
+                          // 切换模型时重置计数（不同模型 = 新一轮）
+                          setDissatisfactionCount(0);
+                        }}
                         className={`p-3 rounded-lg cursor-pointer transition-all ${
                           selectedModel === model.id
                             ? 'bg-indigo-100 border-2 border-indigo-500'
@@ -778,6 +1277,214 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* 装饰模式选择对话框 */}
+      {showDecorativeDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <h3 className="text-2xl font-bold mb-4 text-gray-800">🎨 选择装饰模式</h3>
+            <p className="text-gray-600 mb-6">请选择您想要的图片装饰模式</p>
+
+            {/* 两种模式选择 */}
+            <div className="space-y-4 mb-6">
+              {/* 普通装饰 */}
+              <div
+                onClick={handleNormalDecorative}
+                className="border-2 border-gray-300 rounded-lg p-6 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="text-4xl">🎨</div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-bold text-gray-800 mb-2">普通装饰</h4>
+                    <p className="text-sm text-gray-600">快速添加促销徽章、贴纸、价格标签等常规装饰元素</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">快速生成</span>
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">100+贴纸</span>
+                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">促销风格</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 高级定制 */}
+              <div
+                onClick={handleAdvancedDecorative}
+                className="border-2 border-gray-300 rounded-lg p-6 cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-all"
+              >
+                <div className="flex items-start gap-4">
+                  <div className="text-4xl">✨</div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-bold text-gray-800 mb-2">高级定制 <span className="text-xs bg-gradient-to-r from-purple-600 to-pink-600 text-white px-2 py-1 rounded ml-2">AI驱动</span></h4>
+                    <p className="text-sm text-gray-600">AI智能分析商品信息，生成带文字说明的装饰图，可选边框风格</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">AI提取信息</span>
+                      <span className="text-xs bg-pink-100 text-pink-700 px-2 py-1 rounded">文字装饰</span>
+                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">边框选择</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 取消按钮 */}
+            <button
+              onClick={() => setShowDecorativeDialog(false)}
+              className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+            >
+              取消
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 边框选择对话框 */}
+      {showBorderDialog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <h3 className="text-2xl font-bold mb-4 text-gray-800">🖌️ 选择边框风格</h3>
+            <p className="text-gray-600 mb-6">请选择您想要的边框风格</p>
+
+            {/* 三种边框选择 */}
+            <div className="space-y-4 mb-6">
+              {/* 简约边框 */}
+              <div
+                onClick={() => setSelectedBorderStyle('simple')}
+                className={`border-2 rounded-lg p-6 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all ${
+                  selectedBorderStyle === 'simple' ? 'border-blue-500 bg-blue-50' : ''
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="text-4xl">🔲</div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-bold text-gray-800 mb-2">简约边框</h4>
+                    <p className="text-sm text-gray-600">简洁大方的四角边框</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 国潮边框 */}
+              <div
+                onClick={() => setSelectedBorderStyle('guochao')}
+                className={`border-2 rounded-lg p-6 cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-all ${
+                  selectedBorderStyle === 'guochao' ? 'border-purple-500 bg-purple-50' : ''
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="text-4xl">🏮</div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-bold text-gray-800 mb-2">国潮边框</h4>
+                    <p className="text-sm text-gray-600">充满中国风的边框装饰</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 渐变边框 */}
+              <div
+                onClick={() => setSelectedBorderStyle('gradient')}
+                className={`border-2 rounded-lg p-6 cursor-pointer hover:border-pink-500 hover:bg-pink-50 transition-all ${
+                  selectedBorderStyle === 'gradient' ? 'border-pink-500 bg-pink-50' : ''
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="text-4xl">🌈</div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-bold text-gray-800 mb-2">渐变边框</h4>
+                    <p className="text-sm text-gray-600">绚丽多彩的渐变效果</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* 豪华边框 */}
+              <div
+                onClick={() => setSelectedBorderStyle('luxury')}
+                className={`border-2 rounded-lg p-6 cursor-pointer hover:border-yellow-500 hover:bg-yellow-50 transition-all ${
+                  selectedBorderStyle === 'luxury' ? 'border-yellow-500 bg-yellow-50' : ''
+                }`}
+              >
+                <div className="flex items-start gap-4">
+                  <div className="text-4xl">💎</div>
+                  <div className="flex-1">
+                    <h4 className="text-lg font-bold text-gray-800 mb-2">豪华边框</h4>
+                    <p className="text-sm text-gray-600">奢华精致的边框装饰</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 操作按钮 */}
+            <div className="flex gap-3 mb-4">
+              <button
+                onClick={handleSkipBorder}
+                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              >
+                不需要，直接完成
+              </button>
+              <button
+                onClick={handleAddBorder}
+                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+              >
+                ✅ 添加边框
+              </button>
+            </div>
+
+            {/* 不满意反馈区域 */}
+            <div className="pt-4 border-t border-gray-200">
+              <p className="text-sm text-gray-600 mb-3">💬 对结果不满意？请告诉我需要调整的地方：</p>
+              <textarea
+                value={userFeedback}
+                onChange={(e) => setUserFeedback(e.target.value)}
+                placeholder="例如：商品名称不准确、卖点需要更突出、颜色太淡等..."
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm text-gray-800 placeholder:text-gray-400"
+                rows={3}
+              />
+              <button
+                onClick={handleDissatisfaction}
+                disabled={!userFeedback.trim()}
+                className="mt-3 w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+              >
+                🔄 重新生成 {selectedModel !== 'Doubao-1.5-vision-thinking-pro' && dissatisfactionCount > 0 && `(${dissatisfactionCount}/3)`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 升级模型提示对话框 */}
+      {showUpgradeDialog && (
+        <div className="fixed bottom-6 right-6 bg-white rounded-xl shadow-2xl p-6 max-w-md z-50 border-2 border-purple-500 animate-bounce">
+          <div className="flex items-start gap-4">
+            <div className="text-4xl">🧠</div>
+            <div className="flex-1">
+              <h4 className="text-lg font-bold text-gray-800 mb-2">升级到更强大的AI模型？</h4>
+              <p className="text-sm text-gray-600 mb-4">
+                当前使用 <span className="font-semibold text-indigo-600">{selectedModel === 'Doubao-1.5-vision-pro' ? 'Doubao-vision' : selectedModel}</span> 模型。<br/>
+                升级到 <span className="font-semibold text-purple-600">Doubao-thinking-vision</span> 思维链模型，可以：
+              </p>
+              <ul className="text-sm text-gray-700 mb-4 space-y-1">
+                <li>✨ 更深入分析商品特点</li>
+                <li>📝 提供更详细的产品信息</li>
+                <li>🎨 生成更精美的装饰效果</li>
+                <li>💎 自动添加豪华边框</li>
+                <li>♾️ 无限次修改，直到满意</li>
+              </ul>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleCancelUpgrade}
+                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+                >
+                  不用了
+                </button>
+                <button
+                  onClick={handleUpgradeModel}
+                  className="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-pink-600 text-white rounded-lg hover:from-purple-700 hover:to-pink-700 transition-colors text-sm font-semibold"
+                >
+                  🚀 立即升级
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

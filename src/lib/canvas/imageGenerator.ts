@@ -185,6 +185,17 @@ interface DecorativeImageOptions {
   addPriceTag?: boolean; // 是否添加价格标签
 }
 
+// 新增：智能装饰图生成选项（两步式）
+interface SmartDecorativeOptions {
+  baseImage: string; // base64 图片
+  productName?: string; // 商品名称（AI生成）
+  origin?: string; // 产地（AI生成）
+  highlight?: string; // 卖点（AI生成）
+  description?: string; // 简短说明（AI生成）
+  addBorder?: boolean; // 是否添加边框
+  borderStyle?: 'simple' | 'guochao' | 'gradient' | 'luxury'; // 边框风格
+}
+
 /**
  * 生成氛围图
  */
@@ -1139,5 +1150,449 @@ function drawDiscountBadge(
   ctx.font = 'bold 16px Arial';
   ctx.fillText('折', x, y + 12);
   
+  ctx.restore();
+}
+
+/**
+ * 智能装饰图生成（两步式）
+ * 第一步：添加AI生成的文字说明 + 简洁贴图
+ * 第二步：可选添加边框装饰
+ */
+export async function generateSmartDecorativeImage(
+  options: SmartDecorativeOptions
+): Promise<string> {
+  const {
+    baseImage,
+    productName = '',
+    origin = '',
+    highlight = '',
+    description = '',
+    addBorder = false,
+    borderStyle = 'simple',
+  } = options;
+
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    
+    if (!ctx) {
+      reject(new Error('Canvas context not available'));
+      return;
+    }
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = () => {
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      // 绘制底图
+      ctx.drawImage(img, 0, 0);
+
+      // 第一步：只添加AI真正识别到的信息（过滤无效内容）
+      const validProductName = productName && !isGenericText(productName) ? productName : '';
+      const validOrigin = origin && !isGenericText(origin) ? origin : '';
+      const validHighlight = highlight && !isGenericText(highlight) ? highlight : '';
+      const validDescription = description && !isGenericText(description) ? description : '';
+
+      if (validProductName) {
+        // 左侧竖排大字（商品名）
+        drawVerticalProductName(ctx, validProductName, canvas.width, canvas.height);
+      }
+
+      if (validOrigin) {
+        // 产地标签
+        drawOriginLabel(ctx, validOrigin, canvas.width, canvas.height);
+      }
+
+      if (validHighlight) {
+        // 卖点标签
+        drawHighlightLabel(ctx, validHighlight, canvas.width, canvas.height);
+      }
+
+      if (validDescription) {
+        // 右下角简短说明（不与水印重叠）
+        drawDescription(ctx, validDescription, canvas.width, canvas.height);
+      }
+
+      // 添加少量精致贴图（不过多）
+      drawMinimalStickers(ctx, canvas.width, canvas.height);
+
+      // 第二步：可选边框
+      if (addBorder) {
+        drawBorder(ctx, canvas.width, canvas.height, borderStyle);
+      }
+
+      const result = canvas.toDataURL('image/png', 0.95);
+      resolve(result);
+    };
+
+    img.onerror = () => {
+      reject(new Error('Failed to load image'));
+    };
+
+    img.src = baseImage;
+  });
+}
+
+/**
+ * 判断是否为通用/无效文本
+ */
+function isGenericText(text: string): boolean {
+  const genericTerms = [
+    '优质商品', '精选供应', '品质保障', '精选好物', '值得拥有',
+    '暂无', '未知', '无', 'XXX', 'xxx', '待定'
+  ];
+  return genericTerms.some(term => text.includes(term)) || text.trim().length === 0;
+}
+
+/**
+ * 绘制竖排商品名称（左侧）- 智能调节字体大小
+ */
+function drawVerticalProductName(
+  ctx: CanvasRenderingContext2D,
+  name: string,
+  width: number,
+  height: number
+) {
+  ctx.save();
+
+  // 智能计算字体大小和背景尺寸
+  const nameLength = name.length;
+  let fontSize = nameLength <= 3 ? 52 : nameLength <= 5 ? 42 : 34;
+  let charSpacing = fontSize + 8;
+  const barWidth = fontSize * 2.2;
+  const barHeight = Math.min(nameLength * charSpacing + 80, height - 100);
+  const x = 30;
+  const y = (height - barHeight) / 2;
+
+  // 渐变背景
+  const gradient = ctx.createLinearGradient(x, y, x + barWidth, y);
+  gradient.addColorStop(0, 'rgba(255, 87, 34, 0.9)');
+  gradient.addColorStop(1, 'rgba(255, 152, 0, 0.85)');
+  
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.roundRect(x, y, barWidth, barHeight, 15);
+  ctx.fill();
+
+  // 添加边框
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // 绘制文字（竖排）
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = `bold ${fontSize}px "Microsoft YaHei", Arial`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 5;
+
+  // 逐字绘制
+  const chars = name.split('');
+  const startY = y + 60;
+
+  chars.forEach((char, index) => {
+    const charY = startY + index * charSpacing;
+    if (charY < y + barHeight - 40) {
+      ctx.fillText(char, x + barWidth / 2, charY);
+    }
+  });
+
+  ctx.restore();
+}
+
+/**
+ * 绘制产地标签 - 智能调节宽度和字体
+ */
+function drawOriginLabel(
+  ctx: CanvasRenderingContext2D,
+  origin: string,
+  width: number,
+  height: number
+) {
+  ctx.save();
+
+  // 智能计算宽度
+  const textLength = origin.length;
+  let fontSize = textLength <= 4 ? 20 : textLength <= 6 ? 18 : 16;
+  const labelWidth = Math.max(100, textLength * fontSize + 50);
+  const labelHeight = 50;
+  const x = 150;
+  const y = 50;
+
+  // 渐变背景
+  const gradient = ctx.createLinearGradient(x, y, x + labelWidth, y + labelHeight);
+  gradient.addColorStop(0, 'rgba(139, 69, 19, 0.85)');
+  gradient.addColorStop(1, 'rgba(160, 82, 45, 0.85)');
+  
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.roundRect(x, y, labelWidth, labelHeight, 10);
+  ctx.fill();
+
+  // 边框
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 图标：地点
+  ctx.font = '24px Arial';
+  ctx.fillText('📍', x + 15, y + labelHeight / 2);
+
+  // 产地文字
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = `bold ${fontSize}px "Microsoft YaHei", Arial`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowBlur = 3;
+  
+  ctx.fillText(origin, x + 40, y + labelHeight / 2);
+
+  ctx.restore();
+}
+
+/**
+ * 绘制卖点标签 - 智能调节宽度和字体
+ */
+function drawHighlightLabel(
+  ctx: CanvasRenderingContext2D,
+  highlight: string,
+  width: number,
+  height: number
+) {
+  ctx.save();
+
+  // 智能计算宽度和字体
+  const textLength = highlight.length;
+  let fontSize = textLength <= 6 ? 18 : textLength <= 10 ? 16 : 14;
+  const labelWidth = Math.max(150, textLength * fontSize + 60);
+  const labelHeight = 45;
+  const x = 150;
+  const y = 120;
+
+  // 渐变背景（绿色系）
+  const gradient = ctx.createLinearGradient(x, y, x + labelWidth, y + labelHeight);
+  gradient.addColorStop(0, 'rgba(76, 175, 80, 0.9)');
+  gradient.addColorStop(1, 'rgba(139, 195, 74, 0.85)');
+  
+  ctx.fillStyle = gradient;
+  ctx.beginPath();
+  ctx.roundRect(x, y, labelWidth, labelHeight, 10);
+  ctx.fill();
+
+  // 边框
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // 图标：勾
+  ctx.font = '22px Arial';
+  ctx.fillText('✔️', x + 12, y + labelHeight / 2);
+
+  // 卖点文字
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = `bold ${fontSize}px "Microsoft YaHei", Arial`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.4)';
+  ctx.shadowBlur = 3;
+  
+  ctx.fillText(highlight, x + 40, y + labelHeight / 2);
+
+  ctx.restore();
+}
+
+/**
+ * 绘制右下角简短说明（不与水印重叠）- 智能调节字体和背景
+ */
+function drawDescription(
+  ctx: CanvasRenderingContext2D,
+  description: string,
+  width: number,
+  height: number
+) {
+  ctx.save();
+
+  // 智能字体大小
+  const textLength = description.length;
+  let fontSize = textLength <= 20 ? 15 : textLength <= 35 ? 13 : 11;
+  let maxCharsPerLine = Math.floor(width * 0.35 / fontSize);
+  
+  // 处理文本换行
+  const words = description.split('');
+  let line = '';
+  const lines: string[] = [];
+
+  for (const char of words) {
+    const testLine = line + char;
+    if (testLine.length > maxCharsPerLine && line.length > 0) {
+      lines.push(line);
+      line = char;
+    } else {
+      line = testLine;
+    }
+  }
+  if (line) {
+    lines.push(line);
+  }
+
+  // 只显示前2行
+  const displayLines = lines.slice(0, 2);
+  const lineHeight = fontSize + 5;
+  const bgHeight = displayLines.length * lineHeight + 20;
+  const bgWidth = Math.max(...displayLines.map(l => l.length)) * fontSize + 30;
+  
+  // 位置：右下角，但留出水印空间
+  const x = width - bgWidth - 20;
+  const y = height - bgHeight - 60; // 预留水印空间
+
+  // 半透明背景
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
+  ctx.beginPath();
+  ctx.roundRect(x - 10, y - 8, bgWidth, bgHeight, 8);
+  ctx.fill();
+
+  // 文字
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = `${fontSize}px "Microsoft YaHei", Arial`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'top';
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.5)';
+  ctx.shadowBlur = 2;
+
+  displayLines.forEach((textLine, index) => {
+    ctx.fillText(textLine, x, y + index * lineHeight);
+  });
+
+  ctx.restore();
+}
+
+/**
+ * 绘制少量精致贴图（不过多）
+ */
+function drawMinimalStickers(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number
+) {
+  // 只添加2-3个小型装饰
+  const stickers = [
+    { emoji: '✨', x: width - 80, y: 60, size: 30 },
+    { emoji: '🔥', x: width - 120, y: height / 2, size: 28 },
+    { emoji: '⭐', x: 70, y: height - 90, size: 26 },
+  ];
+
+  stickers.forEach(({ emoji, x, y, size }) => {
+    ctx.save();
+    ctx.font = `${size}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.shadowColor = 'rgba(0, 0, 0, 0.3)';
+    ctx.shadowBlur = 5;
+    ctx.fillText(emoji, x, y);
+    ctx.restore();
+  });
+}
+
+/**
+ * 绘制边框（多种风格）
+ */
+function drawBorder(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  style: string
+) {
+  ctx.save();
+
+  const borderWidth = 15;
+
+  switch (style) {
+    case 'simple':
+      // 简约边框
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.lineWidth = borderWidth;
+      ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
+      break;
+
+    case 'guochao':
+      // 国潮边框（红金色）
+      const guochaoGradient = ctx.createLinearGradient(0, 0, width, height);
+      guochaoGradient.addColorStop(0, '#D32F2F');
+      guochaoGradient.addColorStop(0.5, '#FFD700');
+      guochaoGradient.addColorStop(1, '#D32F2F');
+      
+      ctx.strokeStyle = guochaoGradient;
+      ctx.lineWidth = borderWidth;
+      ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
+      
+      // 内层装饰
+      ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(borderWidth + 5, borderWidth + 5, width - borderWidth * 2 - 10, height - borderWidth * 2 - 10);
+      break;
+
+    case 'gradient':
+      // 渐变边框
+      const gradientBorder = ctx.createLinearGradient(0, 0, width, 0);
+      gradientBorder.addColorStop(0, '#FF5722');
+      gradientBorder.addColorStop(0.5, '#9C27B0');
+      gradientBorder.addColorStop(1, '#2196F3');
+      
+      ctx.strokeStyle = gradientBorder;
+      ctx.lineWidth = borderWidth;
+      ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
+      break;
+
+    case 'luxury':
+      // 豪华边框（金色双线）
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = borderWidth;
+      ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
+      
+      ctx.strokeStyle = 'rgba(139, 69, 19, 0.8)';
+      ctx.lineWidth = 8;
+      ctx.strokeRect(borderWidth + 8, borderWidth + 8, width - borderWidth * 2 - 16, height - borderWidth * 2 - 16);
+      
+      // 角落装饰
+      drawLuxuryCorners(ctx, width, height, borderWidth);
+      break;
+  }
+
+  ctx.restore();
+}
+
+/**
+ * 绘制豪华边框角落装饰
+ */
+function drawLuxuryCorners(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  borderWidth: number
+) {
+  ctx.save();
+  ctx.fillStyle = '#FFD700';
+  const cornerSize = 20;
+  const offset = borderWidth + 5;
+
+  // 四个角
+  const corners = [
+    { x: offset, y: offset }, // 左上
+    { x: width - offset - cornerSize, y: offset }, // 右上
+    { x: offset, y: height - offset - cornerSize }, // 左下
+    { x: width - offset - cornerSize, y: height - offset - cornerSize }, // 右下
+  ];
+
+  corners.forEach(({ x, y }) => {
+    ctx.beginPath();
+    ctx.arc(x + cornerSize / 2, y + cornerSize / 2, 5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
   ctx.restore();
 }

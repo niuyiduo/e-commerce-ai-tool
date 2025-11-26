@@ -5,7 +5,15 @@
 
 interface ChatMessage {
   role: 'user' | 'assistant' | 'system';
-  content: string;
+  content: string | VisionContent[]; // 支持文本和多模态内容
+}
+
+interface VisionContent {
+  type: 'text' | 'image_url';
+  text?: string;
+  image_url?: {
+    url: string;
+  };
 }
 
 interface GenerateOptions {
@@ -67,8 +75,21 @@ export async function generateWithVolcengine(options: GenerateOptions): Promise<
     const messages: ChatMessage[] = [
       { role: 'system', content: systemPrompt },
       ...history,
-      { role: 'user', content: message },
     ];
+
+    // 如果是多模态模型且有图片，使用多模态格式
+    const isVisionModel = model?.includes('vision');
+    if (isVisionModel && productImage) {
+      messages.push({
+        role: 'user',
+        content: [
+          { type: 'text', text: message },
+          { type: 'image_url', image_url: { url: productImage } }
+        ] as VisionContent[]
+      });
+    } else {
+      messages.push({ role: 'user', content: message });
+    }
 
     // 调用火山引擎 API
     const defaultEndpoint = process.env.VOLCENGINE_ENDPOINT_ID;
@@ -80,6 +101,8 @@ export async function generateWithVolcengine(options: GenerateOptions): Promise<
       'Doubao-1.5-pro-4k': process.env.VOLCENGINE_ENDPOINT_PRO_4K || defaultEndpoint,
       'Doubao-lite-32k': process.env.VOLCENGINE_ENDPOINT_LITE_32K || defaultEndpoint,
       'Doubao-lite-4k': process.env.VOLCENGINE_ENDPOINT_LITE_4K || defaultEndpoint,
+      'Doubao-1.5-vision-pro': process.env.VOLCENGINE_ENDPOINT_VISION || defaultEndpoint, // 多模态模型
+      'Doubao-1.5-vision-thinking-pro': process.env.VOLCENGINE_ENDPOINT_THINKING_VISION || defaultEndpoint, // 思维链多模态
     };
     
     // 根据选择的模型获取对应的 endpoint，如果没有指定模型则使用默认 endpoint
