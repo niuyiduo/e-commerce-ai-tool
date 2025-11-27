@@ -322,9 +322,12 @@ export default function Home() {
       // 🔥 优化1：限制对话历史长度，只保留最近6轮（用户+助手各3条）
       const recentMessages = messages.slice(-6);
       
-      // 🔥 优化2：添加30秒超时控制
+      // 🔥 优化2：根据模型类型设置不同的超时时间
+      const isThinkingModel = selectedModel === 'Doubao-1.5-vision-thinking-pro';
+      const timeoutDuration = isThinkingModel ? 60000 : 30000; // thinking模型60秒，普通模型30秒
+      
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
       
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -1097,7 +1100,9 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                           <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
                           <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                         </div>
-                        <p className="text-sm text-gray-600">🧠 AI正在分析中，预计30秒内完成...</p>
+                        <p className="text-sm text-gray-600">
+                          🧠 AI正在分析中，预计{selectedModel === 'Doubao-1.5-vision-thinking-pro' ? '60' : '30'}秒内完成...
+                        </p>
                       </div>
                     </div>
                   </div>
