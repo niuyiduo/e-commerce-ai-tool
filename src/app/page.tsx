@@ -54,6 +54,7 @@ export default function Home() {
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false); // 显示升级模型对话框
   const [dissatisfactionCount, setDissatisfactionCount] = useState(0); // 不满意次数计数
   const [userFeedback, setUserFeedback] = useState(''); // 用户反馈内容
+  const [hasBorderAdded, setHasBorderAdded] = useState(false); // 🔥 记录是否已添加边框
   
   // 可用的豆包模型列表
   const availableModels = [
@@ -76,6 +77,7 @@ export default function Home() {
         setProductInfo({ name: '', origin: '', highlight: '', description: '' });
         setGeneratedImage('');
         setStepOneImage('');
+        setHasBorderAdded(false); // 🔥 重置边框状态
       };
       reader.readAsDataURL(file);
     }
@@ -129,6 +131,7 @@ export default function Home() {
         setProductInfo({ name: '', origin: '', highlight: '', description: '' });
         setGeneratedImage('');
         setStepOneImage('');
+        setHasBorderAdded(false); // 🔥 重置边框状态
       };
       reader.readAsDataURL(file);
     } else {
@@ -639,6 +642,7 @@ export default function Home() {
 
       const finalImage = await addWatermark(borderedImage);
       setGeneratedImage(finalImage);
+      setHasBorderAdded(true); // 🔥 标记已添加边框
 
       setMessages((prev) => [
         ...prev.slice(0, -1),
@@ -673,6 +677,7 @@ export default function Home() {
   // 新增：跳过边框，直接完成
   const handleSkipBorder = () => {
     setShowBorderDialog(false);
+    setHasBorderAdded(false); // 🔥 确认没有添加边框
     setMessages((prev) => [
       ...prev,
       { role: 'assistant', content: '✅ 高级定制装饰图已完成，可以下载使用了！', type: 'text' }
@@ -754,6 +759,8 @@ export default function Home() {
 
       const finalImage = await addWatermark(smartImage);
       setGeneratedImage(finalImage);
+      setHasBorderAdded(true); // 🔥 升级后默认添加了边框
+      setSelectedBorderStyle('luxury'); // 🔥 记录边框风格
 
       setMessages((prev) => [
         ...prev,
@@ -894,14 +901,15 @@ export default function Home() {
       
       setProductInfo(parsedInfo);
 
-      // 重新生成装饰图
+      // 🔥 重新生成装饰图，保留边框设置
       const smartImage = await generateSmartDecorativeImage({
         baseImage: productImage,
         productName: parsedInfo.name,
         origin: parsedInfo.origin,
         highlight: parsedInfo.highlight,
         description: parsedInfo.description,
-        addBorder: false,
+        addBorder: hasBorderAdded, // 🔥 保留用户的边框选择
+        borderStyle: selectedBorderStyle, // 🔥 保留边框风格
       });
 
       const finalImage = await addWatermark(smartImage);
