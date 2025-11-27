@@ -838,7 +838,7 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
       <div className="container mx-auto px-4 py-8">
         <h1 className="text-4xl font-bold text-center mb-8 text-indigo-900">
-          🎨 电商商品素材智能生成工具
+          🎨 朵朵素材魔方
         </h1>
 
         {/* 模式切换 */}
