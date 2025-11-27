@@ -286,6 +286,11 @@ export default function Home() {
 
   // 新增：提取信息的辅助函数（过滤无效内容）
   const extractInfo = (text: string, keywords: string[]): string => {
+    // 🔥 防御性检查：确保text是字符串
+    if (!text || typeof text !== 'string') {
+      return '';
+    }
+    
     for (const keyword of keywords) {
       const regex = new RegExp(`${keyword}[:：「]?\\s*([^。，；」\n]{1,50})`, 'i');
       const match = text.match(regex);
@@ -822,7 +827,17 @@ export default function Home() {
     ]);
 
     try {
-      // 重新调用AI分析，带上完整的对话历史
+      // 🔥 优化1：限制对话历史长度
+      const recentHistory = messages.slice(-6);
+      
+      // 🔥 优化2：根据模型类型设置不同的超时时间
+      const useThinkingModel = selectedModel === 'Doubao-1.5-vision-thinking-pro';
+      const timeoutDuration = useThinkingModel ? 60000 : 30000; // thinking模型60秒，普通模型30秒
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
+      
+      // 重新调用AI分析，带上对话历史
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -854,13 +869,21 @@ export default function Home() {
 用户说"商品名的字太大了" → 回答"商品名：雪莲果（保持不变，仅需调整显示样式）"
 用户说"商品名改成云南雪莲果" → 回答"商品名：云南雪莲果"`,
           productImage,
-          history: [...messages, userMessage], // 传入完整的对话历史
+          history: [...recentHistory, userMessage], // 使用精简后的历史记录
           model: selectedModel, // 使用当前选择的模型
         }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       const data = await response.json();
       const aiResponse = data.content;
+      
+      // 🔥 防御性检查：如果AI响应为空，直接报错
+      if (!aiResponse || typeof aiResponse !== 'string') {
+        throw new Error('服务器返回的数据格式错误或为空');
+      }
       
       const parsedInfo = {
         name: extractInfo(aiResponse, ['商品名', '名称', '产品']) || productInfo.name || '优质商品',
@@ -908,9 +931,21 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
 
     } catch (error) {
       console.error('重新生成失败:', error);
+      
+      // 🔥 优化2：超时错误的友好提示
+      const useThinkingModel = selectedModel === 'Doubao-1.5-vision-thinking-pro';
+      const errorMessage = error instanceof Error && error.name === 'AbortError'
+        ? `⏱️ 请求超时（超过${useThinkingModel ? '60' : '30'}秒）。
+
+建议：
+1. 刷新页面后重试
+2. ${useThinkingModel ? '选择普通的Doubao-vision模型' : '稍后再试'}
+3. 检查网络连接`
+        : `重新生成失败：${error instanceof Error ? error.message : '请重试'}`;
+      
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: '重新生成失败，请重试。', type: 'text' }
+        { role: 'assistant', content: errorMessage, type: 'text' }
       ]);
     }
   };
