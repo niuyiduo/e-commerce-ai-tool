@@ -1073,16 +1073,21 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
 
               {/* 输入框 */}
               <div className="flex gap-2">
-                <input
-                  type="text"
+                <textarea
+                  rows={2}
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendMessage();
+                    }
+                  }}
                   placeholder={productImage ? '输入您的需求,或点击上方快捷按钮' : '请先上传商品图片'}
                   disabled={!productImage || isLoading}
                   className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-800 placeholder:text-gray-500"
-                />
-                <button
+                ></textarea>
+                                <button
                   onClick={handleSendMessage}
                   disabled={!productImage || !inputValue.trim() || isLoading}
                   className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
