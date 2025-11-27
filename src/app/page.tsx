@@ -565,7 +565,7 @@ export default function Home() {
         ]);
         setShowBorderDialog(true); // 显示边框选择对话框
       } else {
-        // 普通Vision模型：直接完成，不显示边框选项
+        // 普通Vision模型：直接完成，不显示边框选项，但显示不满意反馈区域
         setMessages((prev) => [
           ...prev,
           { 
@@ -579,12 +579,15 @@ export default function Home() {
 📝 右下角简要说明
 ✨ 少量精致贴纸
 
-💡 提示：升级到 Doubao-thinking-vision 模型后，可以使用更多边框装饰选项！`, 
+💡 提示：升级到 Doubao-thinking-vision 模型后，可以使用更多边框装饰选项！
+
+💬 对结果不满意？点击下方“🔄 重新生成”按钮告诉我需要调整的地方。`, 
             type: 'image',
             imageUrl: finalImage 
           }
         ]);
         setShowBorderDialog(false); // 不显示边框选择对话框
+        // 显示不满意反馈区域（通过在消息中提示用户）
       }
       
       // 首次生成高级装饰时重置计数（新一轮高级装饰生成）
@@ -1178,6 +1181,27 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                   发送
                 </button>
               </div>
+
+              {/* 🔥 新增：普通Vision模型的不满意反馈区域 */}
+              {generatedImage && selectedModel !== 'Doubao-1.5-vision-thinking-pro' && stepOneImage && !isLoading && (
+                <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-sm text-gray-700 mb-3 font-medium">💬 对结果不满意？请告诉我需要调整的地方：</p>
+                  <textarea
+                    value={userFeedback}
+                    onChange={(e) => setUserFeedback(e.target.value)}
+                    placeholder="例如：商品名称不准确、卖点需要更突出、颜色太淡等..."
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm text-gray-800 placeholder:text-gray-400"
+                    rows={3}
+                  />
+                  <button
+                    onClick={handleDissatisfaction}
+                    disabled={!userFeedback.trim()}
+                    className="mt-3 w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                  >
+                    🔄 重新生成 {dissatisfactionCount > 0 && `(${dissatisfactionCount}/3)`}
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
