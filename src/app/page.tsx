@@ -319,16 +319,26 @@ export default function Home() {
     setIsLoading(true);
 
     try {
+      // 🔥 优化1：限制对话历史长度，只保留最近6轮（用户+助手各3条）
+      const recentMessages = messages.slice(-6);
+      
+      // 🔥 优化2：添加30秒超时控制
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
       const response = await fetch('/api/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: inputValue,
           productImage,
-          history: messages,
+          history: recentMessages, // 使用精简后的历史记录
           model: selectedModel, // 传递选择的模型
         }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       const data = await response.json();
       
@@ -342,9 +352,15 @@ export default function Home() {
       }
     } catch (error) {
       console.error('发送消息失败:', error);
+      
+      // 🔥 优化2：超时错误的友好提示
+      const errorMessage = error instanceof Error && error.name === 'AbortError'
+        ? '⏱️ 请求超时（超过30秒），可能是服务器繁忙。\n\n建议：\n1. 刷新页面清空对话历史后重试\n2. 选择轻量级模型（Doubao-lite-4k）\n3. 稍后再试'
+        : '抱歉，生成素材时出现错误，请重试。';
+      
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: '抱歉，生成素材时出现错误，请重试。', type: 'text' },
+        { role: 'assistant', content: errorMessage, type: 'text' },
       ]);
     } finally {
       setIsLoading(false);
@@ -438,6 +454,13 @@ export default function Home() {
     ]);
 
     try {
+      // 🔥 优化1：限制对话历史长度
+      const recentMessages = messages.slice(-6);
+      
+      // 🔥 优化2：添加30秒超时控制
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
       // 第一步：调用当前选择的多模态模型分析图片
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -448,7 +471,7 @@ export default function Home() {
 1. 商品名称（如果图片中明确显示或可以准确识别）
 2. 产地/来源（如果图片中有相关信息）
 3. 主要卖点（根据图片内容提取）
-4. 简短说明（不超过50字，**请用自然语言描述，不要带“说明：”等标签**）
+4. 简短说明（不超过50字，**请用自然语言描述，不要带"说明："等标签**）
 
 重要规则：
 - 如果某个信息在图片中没有明确显示或无法确定，请回答"未显示"
@@ -459,12 +482,15 @@ export default function Home() {
 商品名：XXX
 产地：XXX或未显示
 卖点：XXX
-说明：这是一款...（直接写描述文字，不要重复“说明：”）`,
+说明：这是一款...（直接写描述文字，不要重复"说明："）`,
           productImage,
-          history: messages,
+          history: recentMessages, // 使用精简后的历史记录
           model: selectedModel, // 使用当前选择的模型
         }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       const data = await response.json();
       const aiResponse = data.content;
@@ -538,9 +564,15 @@ export default function Home() {
 
     } catch (error) {
       console.error('生成高级装饰图失败:', error);
+      
+      // 🔥 优化2：超时错误的友好提示
+      const errorMessage = error instanceof Error && error.name === 'AbortError'
+        ? '⏱️ AI分析超时（超过30秒）。\n\n建议：刷新页面后重试，或选择轻量级模型。'
+        : '高级装饰图生成失败，请重试。';
+      
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: '高级装饰图生成失败，请重试。', type: 'text' }
+        { role: 'assistant', content: errorMessage, type: 'text' }
       ]);
     }
   };
@@ -620,6 +652,13 @@ export default function Home() {
     ]);
 
     try {
+      // 🔥 优化1：限制对话历史长度
+      const recentMessages = messages.slice(-6);
+      
+      // 🔥 优化2：添加30秒超时控制
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      
       // 使用思维链模型重新分析
       const response = await fetch('/api/chat', {
         method: 'POST',
@@ -627,10 +666,13 @@ export default function Home() {
         body: JSON.stringify({
           message: '请更深入分析这张商品图片，提供更详细的信息：1.精确的商品名称 2.详细的产地信息 3.多个卖点（分点列举） 4.更具吸引力的说明（不超过80字）。请用清晰的格式回答。',
           productImage,
-          history: messages,
+          history: recentMessages, // 使用精简后的历史记录
           model: 'Doubao-1.5-vision-thinking-pro', // 使用思维链模型
         }),
+        signal: controller.signal,
       });
+      
+      clearTimeout(timeoutId);
 
       const data = await response.json();
       const aiResponse = data.content;
@@ -1040,10 +1082,13 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                 {isLoading && (
                   <div className="flex justify-start">
                     <div className="bg-gray-100 px-4 py-3 rounded-lg">
-                      <div className="flex space-x-2">
-                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
-                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
-                        <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                      <div className="flex items-center space-x-3">
+                        <div className="flex space-x-2">
+                          <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }}></div>
+                          <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }}></div>
+                          <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
+                        </div>
+                        <p className="text-sm text-gray-600">🧠 AI正在分析中，预计30秒内完成...</p>
                       </div>
                     </div>
                   </div>
