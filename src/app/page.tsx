@@ -461,8 +461,8 @@ export default function Home() {
       const recentMessages = messages.slice(-6);
       
       // 🔥 优化2：根据模型类型设置不同的超时时间
-      const isThinkingModel = selectedModel === 'Doubao-1.5-vision-thinking-pro';
-      const timeoutDuration = isThinkingModel ? 60000 : 30000; // thinking模型60秒，普通模型30秒
+      const useThinkingModel = selectedModel === 'Doubao-1.5-vision-thinking-pro';
+      const timeoutDuration = useThinkingModel ? 60000 : 30000; // thinking模型60秒，普通模型30秒
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
@@ -541,11 +541,15 @@ export default function Home() {
       setStepOneImage(finalImage);
       setGeneratedImage(finalImage);
 
-      setMessages((prev) => [
-        ...prev,
-        { 
-          role: 'assistant', 
-          content: `✅ 第一步完成！
+      // 🔥 区分模型：普通Vision模型不显示边框选项，直接完成（复用上面的useThinkingModel变量）
+      
+      if (useThinkingModel) {
+        // Thinking模型：显示边框选择对话框
+        setMessages((prev) => [
+          ...prev,
+          { 
+            role: 'assistant', 
+            content: `✅ 第一步完成！
 
 已添加：
 🏷️ 左侧竖排商品名
@@ -555,13 +559,33 @@ export default function Home() {
 ✨ 少量精致贴纸
 
 是否需要添加边框装饰？`, 
-          type: 'image',
-          imageUrl: finalImage 
-        }
-      ]);
+            type: 'image',
+            imageUrl: finalImage 
+          }
+        ]);
+        setShowBorderDialog(true); // 显示边框选择对话框
+      } else {
+        // 普通Vision模型：直接完成，不显示边框选项
+        setMessages((prev) => [
+          ...prev,
+          { 
+            role: 'assistant', 
+            content: `✅ 高级定制装饰图完成！
 
-      // 显示边框选择对话框
-      setShowBorderDialog(true);
+已添加：
+🏷️ 左侧竖排商品名
+📍 产地标签
+✔️ 卖点标签
+📝 右下角简要说明
+✨ 少量精致贴纸
+
+💡 提示：升级到 Doubao-thinking-vision 模型后，可以使用更多边框装饰选项！`, 
+            type: 'image',
+            imageUrl: finalImage 
+          }
+        ]);
+        setShowBorderDialog(false); // 不显示边框选择对话框
+      }
       
       // 首次生成高级装饰时重置计数（新一轮高级装饰生成）
       if (!stepOneImage) {
