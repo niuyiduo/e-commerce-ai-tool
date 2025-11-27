@@ -1509,56 +1509,85 @@ function drawBorder(
 ) {
   ctx.save();
 
-  const borderWidth = 15;
+  const borderWidth = 25; // 🔥 增加边框宽度，使其更明显
 
   switch (style) {
     case 'simple':
-      // 简约边框
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      // 🔥 简约边框 - 纯白色双线框
+      ctx.strokeStyle = '#FFFFFF';
       ctx.lineWidth = borderWidth;
       ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
+      
+      // 内层灰色线
+      ctx.strokeStyle = '#CCCCCC';
+      ctx.lineWidth = 5;
+      ctx.strokeRect(borderWidth + 5, borderWidth + 5, width - borderWidth * 2 - 10, height - borderWidth * 2 - 10);
       break;
 
     case 'guochao':
-      // 国潮边框（红金色）
+      // 🔥 国潮边框 - 红金渐变 + 四角装饰
       const guochaoGradient = ctx.createLinearGradient(0, 0, width, height);
       guochaoGradient.addColorStop(0, '#D32F2F');
-      guochaoGradient.addColorStop(0.5, '#FFD700');
+      guochaoGradient.addColorStop(0.3, '#FFD700');
+      guochaoGradient.addColorStop(0.7, '#FFD700');
       guochaoGradient.addColorStop(1, '#D32F2F');
       
       ctx.strokeStyle = guochaoGradient;
       ctx.lineWidth = borderWidth;
       ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
       
-      // 内层装饰
-      ctx.strokeStyle = 'rgba(255, 215, 0, 0.5)';
-      ctx.lineWidth = 3;
+      // 内层金色装饰线
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 5;
       ctx.strokeRect(borderWidth + 5, borderWidth + 5, width - borderWidth * 2 - 10, height - borderWidth * 2 - 10);
+      
+      // 🔥 国潮四角装饰
+      drawGuochaoCorners(ctx, width, height, borderWidth);
       break;
 
     case 'gradient':
-      // 渐变边框
-      const gradientBorder = ctx.createLinearGradient(0, 0, width, 0);
-      gradientBorder.addColorStop(0, '#FF5722');
-      gradientBorder.addColorStop(0.5, '#9C27B0');
-      gradientBorder.addColorStop(1, '#2196F3');
+      // 🔥 渐变边框 - 紫粉蓝渐变 + 阴影效果
+      const gradientBorder = ctx.createLinearGradient(0, 0, width, height);
+      gradientBorder.addColorStop(0, '#FF1744');
+      gradientBorder.addColorStop(0.33, '#E91E63');
+      gradientBorder.addColorStop(0.66, '#9C27B0');
+      gradientBorder.addColorStop(1, '#673AB7');
       
+      // 外层发光效果
+      ctx.shadowColor = 'rgba(156, 39, 176, 0.8)';
+      ctx.shadowBlur = 20;
       ctx.strokeStyle = gradientBorder;
       ctx.lineWidth = borderWidth;
       ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
+      
+      // 清除阴影
+      ctx.shadowColor = 'transparent';
+      ctx.shadowBlur = 0;
+      
+      // 内层白色发光线
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(borderWidth + 6, borderWidth + 6, width - borderWidth * 2 - 12, height - borderWidth * 2 - 12);
       break;
 
     case 'luxury':
-      // 豪华边框（金色双线）
-      ctx.strokeStyle = '#FFD700';
+      // 🔥 豪华边框 - 金色三层框 + 宝石角装饰
+      // 最外层：深金色
+      ctx.strokeStyle = '#B8860B';
       ctx.lineWidth = borderWidth;
       ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
       
-      ctx.strokeStyle = 'rgba(139, 69, 19, 0.8)';
-      ctx.lineWidth = 8;
-      ctx.strokeRect(borderWidth + 8, borderWidth + 8, width - borderWidth * 2 - 16, height - borderWidth * 2 - 16);
+      // 中间层：亮金色
+      ctx.strokeStyle = '#FFD700';
+      ctx.lineWidth = 12;
+      ctx.strokeRect(borderWidth + 6, borderWidth + 6, width - borderWidth * 2 - 12, height - borderWidth * 2 - 12);
       
-      // 角落装饰
+      // 内层：红棕色
+      ctx.strokeStyle = '#8B4513';
+      ctx.lineWidth = 6;
+      ctx.strokeRect(borderWidth + 14, borderWidth + 14, width - borderWidth * 2 - 28, height - borderWidth * 2 - 28);
+      
+      // 🔥 四角宝石装饰
       drawLuxuryCorners(ctx, width, height, borderWidth);
       break;
   }
@@ -1567,7 +1596,56 @@ function drawBorder(
 }
 
 /**
- * 绘制豪华边框角落装饰
+ * 🔥 绘制国潮边框四角装饰（红灯笼图案）
+ */
+function drawGuochaoCorners(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  borderWidth: number
+) {
+  ctx.save();
+  
+  const cornerSize = 40;
+  const offset = borderWidth;
+
+  // 四个角的位置
+  const corners = [
+    { x: offset, y: offset }, // 左上
+    { x: width - offset - cornerSize, y: offset }, // 右上
+    { x: offset, y: height - offset - cornerSize }, // 左下
+    { x: width - offset - cornerSize, y: height - offset - cornerSize }, // 右下
+  ];
+
+  corners.forEach(({ x, y }) => {
+    // 绘制金色菱形
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.moveTo(x + cornerSize / 2, y);
+    ctx.lineTo(x + cornerSize, y + cornerSize / 2);
+    ctx.lineTo(x + cornerSize / 2, y + cornerSize);
+    ctx.lineTo(x, y + cornerSize / 2);
+    ctx.closePath();
+    ctx.fill();
+    
+    // 红色内圆
+    ctx.fillStyle = '#D32F2F';
+    ctx.beginPath();
+    ctx.arc(x + cornerSize / 2, y + cornerSize / 2, 8, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 金色点缀
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(x + cornerSize / 2, y + cornerSize / 2, 3, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  ctx.restore();
+}
+
+/**
+ * 🔥 绘制豪华边框角落装饰（宝石效果）
  */
 function drawLuxuryCorners(
   ctx: CanvasRenderingContext2D,
@@ -1576,9 +1654,9 @@ function drawLuxuryCorners(
   borderWidth: number
 ) {
   ctx.save();
-  ctx.fillStyle = '#FFD700';
-  const cornerSize = 20;
-  const offset = borderWidth + 5;
+  
+  const cornerSize = 35;
+  const offset = borderWidth + 10;
 
   // 四个角
   const corners = [
@@ -1589,8 +1667,36 @@ function drawLuxuryCorners(
   ];
 
   corners.forEach(({ x, y }) => {
+    const centerX = x + cornerSize / 2;
+    const centerY = y + cornerSize / 2;
+    
+    // 🔥 外层：金色发光圆
+    const gradient = ctx.createRadialGradient(centerX, centerY, 0, centerX, centerY, cornerSize / 2);
+    gradient.addColorStop(0, '#FFD700');
+    gradient.addColorStop(0.6, '#FFA500');
+    gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+    
+    ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(x + cornerSize / 2, y + cornerSize / 2, 5, 0, Math.PI * 2);
+    ctx.arc(centerX, centerY, cornerSize / 2, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 🔥 中层：实心金圆
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 12, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 🔥 内层：红宝石
+    ctx.fillStyle = '#DC143C';
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 6, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 🔥 高光点
+    ctx.fillStyle = '#FFFFFF';
+    ctx.beginPath();
+    ctx.arc(centerX - 2, centerY - 2, 2, 0, Math.PI * 2);
     ctx.fill();
   });
 
