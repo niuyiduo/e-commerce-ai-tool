@@ -457,9 +457,12 @@ export default function Home() {
       // 🔥 优化1：限制对话历史长度
       const recentMessages = messages.slice(-6);
       
-      // 🔥 优化2：添加30秒超时控制
+      // 🔥 优化2：根据模型类型设置不同的超时时间
+      const isThinkingModel = selectedModel === 'Doubao-1.5-vision-thinking-pro';
+      const timeoutDuration = isThinkingModel ? 60000 : 30000; // thinking模型60秒，普通模型30秒
+      
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
       
       // 第一步：调用当前选择的多模态模型分析图片
       const response = await fetch('/api/chat', {
@@ -655,9 +658,9 @@ export default function Home() {
       // 🔥 优化1：限制对话历史长度
       const recentMessages = messages.slice(-6);
       
-      // 🔥 优化2：添加30秒超时控制
+      // 🔥 优化2：thinking模型需要更长的超时时间（60秒）
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 30000);
+      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
       
       // 使用思维链模型重新分析
       const response = await fetch('/api/chat', {
@@ -729,9 +732,15 @@ export default function Home() {
 
     } catch (error) {
       console.error('升级模型生成失败:', error);
+      
+      // 🔥 优化2：超时错误的友好提示
+      const errorMessage = error instanceof Error && error.name === 'AbortError'
+        ? '⏱️ Thinking模型分析超时（超过60秒）。\n\n建议：\n1. 刷新页面后重试\n2. 或选择普通的Doubao-vision模型\n3. 稍后再试'
+        : '升级模型生成失败，请重试。';
+      
       setMessages((prev) => [
         ...prev,
-        { role: 'assistant', content: '升级模型生成失败，请重试。', type: 'text' }
+        { role: 'assistant', content: errorMessage, type: 'text' }
       ]);
     }
   };
