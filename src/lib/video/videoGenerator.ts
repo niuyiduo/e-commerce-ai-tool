@@ -389,6 +389,19 @@ async function drawVRMAvatar(
       head.rotation.y = Math.sin(animationTime * 0.8) * 0.1; // 左右摆动
       head.rotation.z = Math.sin(animationTime * 0.6) * 0.05; // 微微倾斜
     }
+    
+    // 身体随风飘动效果
+    const spine = vrm.humanoid.getNormalizedBoneNode('spine');
+    if (spine) {
+      spine.rotation.z = Math.sin(animationTime * 0.5) * 0.03; // 身体左右轻微摆动
+      spine.rotation.x = Math.sin(animationTime * 0.7) * 0.02; // 前后轻微摆动
+    }
+    
+    // 头发/装饰物飘动（如果有）
+    const chest = vrm.humanoid.getNormalizedBoneNode('chest');
+    if (chest) {
+      chest.rotation.z = Math.sin(animationTime * 0.6 + 1) * 0.025; // 上半身随风
+    }
   }
   
   // 3. 眨眼动画（慢速大幅度眨眼）
