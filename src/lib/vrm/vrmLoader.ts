@@ -62,19 +62,19 @@ export function createVRMScene(canvasWidth: number, canvasHeight: number) {
 
   // 摄像机
   const camera = new THREE.PerspectiveCamera(
-    30,
+    35,  // 视野角度稍大
     canvasWidth / canvasHeight,
     0.1,
     20
   );
-  camera.position.set(0, 1, 3);
+  camera.position.set(0, 1.2, 2); // 调整位置：正面、稍高、更近
 
-  // 光源
-  const light = new THREE.DirectionalLight(0xffffff, 1);
-  light.position.set(1, 1, 1).normalize();
+  // 光源（增强正面光照）
+  const light = new THREE.DirectionalLight(0xffffff, 1.5); // 增强亮度
+  light.position.set(0, 1, 2).normalize(); // 正面打光
   scene.add(light);
 
-  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // 增强环境光
   scene.add(ambientLight);
 
   // 渲染器

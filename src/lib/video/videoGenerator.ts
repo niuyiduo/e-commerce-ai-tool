@@ -355,7 +355,7 @@ async function drawVRMAvatar(
   const { vrm, scene3D } = vrmData;
   const { scene, camera, renderer } = scene3D;
   
-  const avatarSize = 150; // VRM 形象略大
+  const avatarSize = 250; // VRM 形象增大（原 150）
   const padding = 20;
   
   // 计算位置
@@ -378,11 +378,11 @@ async function drawVRMAvatar(
   // 口型同步：根据说话状态调整表情
   if (vrm.expressionManager) {
     if (isSpeaking) {
-      // 模拟口型动画（正弦波调制）
-      const mouthValue = (Math.sin(currentTime * 15) + 1) / 2; // 0-1 范围
+      // 模拟口型动画（增强张嘉幅度）
+      const mouthValue = (Math.sin(currentTime * 20) + 1) / 2; // 加快频率，0-1 范围
       try {
-        vrm.expressionManager.setValue('aa', mouthValue * 0.8);
-        vrm.expressionManager.setValue('happy', 0.3); // 微笑表情
+        vrm.expressionManager.setValue('aa', mouthValue * 1.0); // 增大到 1.0（原 0.8）
+        vrm.expressionManager.setValue('happy', 0.2); // 减小微笑（原 0.3）
       } catch (e) {
         // 忽略不存在的表情
       }
@@ -410,16 +410,7 @@ async function drawVRMAvatar(
     x, y, avatarSize, avatarSize
   );
   
-  // 添加发光效果（说话时）
-  if (isSpeaking) {
-    ctx.save();
-    ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)'; // 金色光晕（区分于基础版本）
-    ctx.lineWidth = 4;
-    ctx.beginPath();
-    ctx.arc(x + avatarSize / 2, y + avatarSize / 2, avatarSize / 2 + 8, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.restore();
-  }
+  // 不再添加金色光晕，只靠口型动画
 }
 
 /**
