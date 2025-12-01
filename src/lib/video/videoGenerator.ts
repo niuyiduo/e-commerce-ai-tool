@@ -467,6 +467,39 @@ async function drawVRMAvatar(
   // 更新 VRM 模型（每帧更新）
   vrm.update(1 / 30);
   
+  // 5. 配饰环绕旋转效果（查找并旋转模型周围的装饰物）
+  vrm.scene.traverse((object: any) => {
+    // 查找可能的配饰对象（通常命名包含这些关键词）
+    const name = object.name?.toLowerCase() || '';
+    const isAccessory = name.includes('accessory') || 
+                        name.includes('decoration') || 
+                        name.includes('ornament') ||
+                        name.includes('prop') ||
+                        object.userData?.isAccessory;
+    
+    if (isAccessory && object.position) {
+      // 保存原始位置（第一次遇到时）
+      if (!object.userData.originalPosition) {
+        object.userData.originalPosition = object.position.clone();
+        object.userData.rotationOffset = Math.random() * Math.PI * 2; // 随机初始角度
+      }
+      
+      const originalPos = object.userData.originalPosition;
+      const radius = Math.sqrt(originalPos.x ** 2 + originalPos.z ** 2); // 计算半径
+      const rotationSpeed = 0.5; // 旋转速度
+      const currentAngle = animationTime * rotationSpeed + object.userData.rotationOffset;
+      
+      // 360度环绕旋转
+      object.position.x = Math.cos(currentAngle) * radius;
+      object.position.z = Math.sin(currentAngle) * radius;
+      // Y轴保持原位，或添加轻微上下浮动
+      object.position.y = originalPos.y + Math.sin(animationTime * 1.5 + object.userData.rotationOffset) * 0.05;
+      
+      // 配饰自身也旋转
+      object.rotation.y = currentAngle;
+    }
+  });
+  
   // 渲染 VRM 到临时 Canvas
   renderer.render(scene, camera);
   
