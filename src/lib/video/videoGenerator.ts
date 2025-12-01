@@ -128,38 +128,68 @@ export async function generateVideo(
   const frames: ImageData[] = [];
   const totalFrames = Math.floor(duration * fps);
   
-  // 动态计算音频检查间隔和估算时长
-  let audioCheckInterval: number;
-  let estimatedAudioDurationPerCaption: number;
-  
-  if (durationPerImage < 3) {
-    // 短视频：每0.5秒检查一次
-    audioCheckInterval = 0.5;
-    estimatedAudioDurationPerCaption = 1.5; // 估算每段音频1.5秒
-  } else {
-    // 长视频：每1.5秒检查一次
-    audioCheckInterval = 1.5;
-    estimatedAudioDurationPerCaption = 3; // 估算每段音频3秒
-  }
-  
-  console.log(`音频检查间隔: ${audioCheckInterval}秒, 估算单段时长: ${estimatedAudioDurationPerCaption}秒`);
-  
-  // 计算每段字幕的音频时间范围
+  // 如果启用配音，先生成音频获取真实时长
+  let preGeneratedAudioData: any = null;
   const captionTimeRanges: Array<{start: number, end: number}> = [];
-  let totalAudioDuration = 0;
   
   if (enableVoice && finalCaptions.length > 0) {
+    try {
+      console.log('🎵 开始预生成音频以获取真实时长...');
+      
+      // 调用TTS API生成音频并获取时长
+      const fullText = finalCaptions.join('。 ');
+      const response = await fetch('/api/tts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          text: fullText,
+          voiceType: voiceType,
+        }),
+      });
+      
+      if (response.ok) {
+        const responseData = await response.json();
+        if (responseData.success && responseData.audioData) {
+          preGeneratedAudioData = responseData;
+          
+          // 解码音频获取真实时长
+          const audioContext = new AudioContext();
+          const audioBuffer = await base64ToArrayBuffer(responseData.audioData);
+          const decodedAudio = await audioContext.decodeAudioData(audioBuffer);
+          const realTotalDuration = decodedAudio.duration;
+          
+          console.log(`✅ 音频真实总时长: ${realTotalDuration.toFixed(2)}秒`);
+          
+          // 按字幕数量平均分配时长
+          const durationPerCaption = realTotalDuration / finalCaptions.length;
+          
+          // 计算每段字幕的精确时间范围
+          for (let i = 0; i < finalCaptions.length; i++) {
+            const start = i * durationPerCaption;
+            const end = (i + 1) * durationPerCaption;
+            captionTimeRanges.push({ start, end });
+          }
+          
+          console.log('📊 字幕精确时间范围:', captionTimeRanges);
+          audioContext.close();
+        }
+      }
+    } catch (error) {
+      console.warn('⚠️ 预生成音频失败，将使用估算时长:', error);
+    }
+  }
+  
+  // 如果预生成失败，使用估算值作为后备方案
+  if (enableVoice && finalCaptions.length > 0 && captionTimeRanges.length === 0) {
+    console.log('📐 使用估算时长作为后备方案');
     const timePerImage = durationPerImage;
+    const estimatedDuration = timePerImage < 3 ? 1.5 : 3;
     
     for (let i = 0; i < finalCaptions.length; i++) {
       const start = i * timePerImage;
-      const end = start + Math.min(estimatedAudioDurationPerCaption, timePerImage);
+      const end = start + Math.min(estimatedDuration, timePerImage);
       captionTimeRanges.push({ start, end });
-      totalAudioDuration = end;
     }
-    
-    console.log('字幕时间范围:', captionTimeRanges);
-    console.log('音频总时长:', totalAudioDuration, '秒');
   }
   for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
     const currentTime = frameIndex / fps;
@@ -219,11 +249,10 @@ export async function generateVideo(
         );
       }
       
-      // 调试日志（按检查间隔输出）
-      const shouldLog = Math.abs(currentTime % audioCheckInterval) < (1 / fps);
-      if (shouldLog) {
+      // 调试日志（每30帧输出一次）
+      if (frameIndex % 30 === 0) {
         const currentRange = captionTimeRanges.find(r => currentTime >= r.start && currentTime < r.end);
-        console.log(`时间=${currentTime.toFixed(2)}s, 说话=${isSpeaking}, 音频范围=${currentRange ? `${currentRange.start.toFixed(2)}-${currentRange.end.toFixed(2)}` : '无'}`);
+        console.log(`帧${frameIndex}: 时间=${currentTime.toFixed(2)}s, 说话=${isSpeaking}, 音频范围=${currentRange ? `${currentRange.start.toFixed(2)}-${currentRange.end.toFixed(2)}` : '无'}`);
       }
       
       if (vrmData) {
@@ -245,7 +274,11 @@ export async function generateVideo(
     canvas.width, 
     canvas.height, 
     fps,
-    enableVoice ? { captions: finalCaptions, voiceType } : undefined
+    enableVoice ? { 
+      captions: finalCaptions, 
+      voiceType,
+      preGeneratedAudioData // 传递预生成的音频数据
+    } : undefined
   );
   
   return videoBlob;
@@ -670,7 +703,11 @@ async function createVideoFromFrames(
   width: number,
   height: number,
   fps: number,
-  voiceOptions?: { captions: string[]; voiceType: 'male' | 'female' | 'child' }
+  voiceOptions?: { 
+    captions: string[]; 
+    voiceType: 'male' | 'female' | 'child';
+    preGeneratedAudioData?: any; // 预生成的音频数据
+  }
 ): Promise<Blob> {
   const canvas = document.createElement('canvas');
   canvas.width = width;
@@ -687,7 +724,34 @@ async function createVideoFromFrames(
   let finalStream = videoStream;
   if (voiceOptions) {
     try {
-      const audioStream = await generateAudioStream(voiceOptions.captions, voiceOptions.voiceType, frames.length / fps);
+      let audioStream;
+      
+      // 如果有预生成的音频，直接使用；否则重新生成
+      if (voiceOptions.preGeneratedAudioData) {
+        console.log('🔄 复用预生成的音频数据');
+        
+        // 从 Base64 创建音频流
+        const audioContext = new AudioContext();
+        const destination = audioContext.createMediaStreamDestination();
+        
+        const audioBuffer = await base64ToArrayBuffer(voiceOptions.preGeneratedAudioData.audioData);
+        const decodedAudio = await audioContext.decodeAudioData(audioBuffer);
+        
+        const source = audioContext.createBufferSource();
+        source.buffer = decodedAudio;
+        source.connect(destination);
+        source.start(0);
+        
+        audioStream = destination.stream;
+      } else {
+        console.log('🎵 重新生成音频流');
+        audioStream = await generateAudioStream(
+          voiceOptions.captions,
+          voiceOptions.voiceType,
+          frames.length / fps
+        );
+      }
+      
       if (audioStream) {
         // 合并视频流和音频流
         const videoTrack = videoStream.getVideoTracks()[0];
