@@ -128,10 +128,17 @@ export async function generateVideo(
   const frames: ImageData[] = [];
   const totalFrames = Math.floor(duration * fps);
   
-  // 计算音频估计时长（每段字幕约1.5秒，更准确）
-  const estimatedAudioDuration = enableVoice ? finalCaptions.length * 1.5 : 0;
-  console.log(`视频总时长: ${duration}秒, 音频估计时长: ${estimatedAudioDuration}秒, 字幕数: ${finalCaptions.length}`);
-
+  // 计算每段字幕的时间范围（精确到每帧）
+  const captionTimeRanges: Array<{start: number, end: number}> = [];
+  if (enableVoice && finalCaptions.length > 0) {
+    const timePerImage = durationPerImage; // 每张图片的时间
+    for (let i = 0; i < finalCaptions.length; i++) {
+      const start = i * timePerImage;
+      const end = start + Math.min(3, timePerImage); // 每段字幕最多3秒
+      captionTimeRanges.push({ start, end });
+    }
+    console.log('字幕时间范围:', captionTimeRanges);
+  }
   for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
     const currentTime = frameIndex / fps;
     
@@ -180,12 +187,19 @@ export async function generateVideo(
     
     // 添加虚拟形象（如果启用）
     if (enableAvatar) {
-      // 根据音频估计时长判断是否还在说话
-      const isSpeaking = enableVoice && currentTime < estimatedAudioDuration;
+      // 精确判断当前时间是否有音频播放
+      let isSpeaking = false;
+      if (enableVoice && captionTimeRanges.length > 0) {
+        // 检查当前时间是否在任何字幕的时间范围内
+        isSpeaking = captionTimeRanges.some(range => 
+          currentTime >= range.start && currentTime < range.end
+        );
+      }
       
       // 调试日志（每30帧输出一次）
       if (frameIndex % 30 === 0) {
-        console.log(`帧${frameIndex}: 时间=${currentTime.toFixed(2)}s, 说话=${isSpeaking}, 音频时长=${estimatedAudioDuration}s`);
+        const currentRange = captionTimeRanges.find(r => currentTime >= r.start && currentTime < r.end);
+        console.log(`帧${frameIndex}: 时间=${currentTime.toFixed(2)}s, 说话=${isSpeaking}, 当前范围=${currentRange ? `${currentRange.start.toFixed(2)}-${currentRange.end.toFixed(2)}` : '无'}`);
       }
       
       if (vrmData) {
