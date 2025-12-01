@@ -384,23 +384,18 @@ async function drawVRMAvatar(
  // 3D 动画效果：让角色"活"起来
   const animationTime = currentTime * 2; // 动画时间
   
-  // 调试：每100帧输出一次状态
-  if (Math.floor(currentTime * 30) % 100 === 0) {
-    console.log(`[VRM动画] 时间:${currentTime.toFixed(2)}s, 说话状态:${isSpeaking}, 有表情系统:${!!vrm.expressionManager}, 有骨骼系统:${!!vrm.humanoid}`);
-  }
-  
-  // 1. 呼吸动画（身体上下起伏）- 增大幅度
-  const breathingOffset = Math.sin(animationTime * 1.5) * 0.02; // 增大到0.02（原0.008）
+  // 1. 呼吸动画（身体上下起伏）- 减小幅度避免抖动
+  const breathingOffset = Math.sin(animationTime * 1.5) * 0.005; // 减小到0.005
   vrm.scene.position.y += breathingOffset;
   
-  // 2. 整体模型微动（适配无骨骼模型）- 增大幅度
+  // 2. 整体模型微动（适配无骨骼模型）- 大幅减小避免抖动
   // 左右轻微摆动
-  vrm.scene.rotation.y += Math.sin(animationTime * 0.8) * 0.02; // 增大到0.02（原0.005）
-  vrm.scene.rotation.z = Math.sin(animationTime * 0.6) * 0.05; // 增大到0.05（原0.02）
+  vrm.scene.rotation.y += Math.sin(animationTime * 0.8) * 0.008; // 减小到0.008
+  vrm.scene.rotation.z = Math.sin(animationTime * 0.6) * 0.015; // 减小到0.015
   
-  // 3. 模拟随风效果（整体摆动）- 增大幅度
-  const swayX = Math.sin(animationTime * 0.5) * 0.03; // 增大到0.03（原0.01）
-  const swayZ = Math.sin(animationTime * 0.7) * 0.04; // 增大到0.04（原0.015）
+  // 3. 模拟随风效果（整体摆动）- 大幅减小避免抖动
+  const swayX = Math.sin(animationTime * 0.5) * 0.01; // 减小到0.01
+  const swayZ = Math.sin(animationTime * 0.7) * 0.012; // 减小到0.012
   vrm.scene.rotation.x = swayX;
   // vrm.scene.rotation.z 已经在上面设置了
   
@@ -442,7 +437,7 @@ async function drawVRMAvatar(
   
   // 同时使用大幅度缩放动画（无论是否有表情系统）
   if (shouldBlink) {
-    blinkScaleEffect = 1 - (blinkCycle - 0.85) / 0.15 * 0.2; // 增大到20%缩放
+    blinkScaleEffect = 1 - (blinkCycle - 0.85) / 0.15 * 0.08; // 减小到8%缩放
   }
   
   // 5. 口型同步（强制使用大幅度动画）
@@ -492,24 +487,19 @@ async function drawVRMAvatar(
   // 同时使用大幅度动画（无论是否有表情系统）
   if (isSpeaking) {
     const talkCycle = Math.sin(animationTime * 10); // 高频率
-    // Z轴前后移动（模拟嘴巴伸出）- 大幅度
-    vrm.scene.position.z += talkCycle * 0.12; // 增大到0.12
-    // 上下摇头效果 - 大幅度
-    vrm.scene.rotation.x += talkCycle * 0.2; // 增大到0.2
-    // 增加左右摇头
-    vrm.scene.rotation.y += Math.cos(animationTime * 10) * 0.15; // 增大到0.15
-    // 增加缩放效果（模拟张嘴）
-    talkScaleEffect = 1 + Math.abs(talkCycle) * 0.12; // 增大到12%
+    // Z轴前后移动（模拟嘴巴伸出）- 减小幅度避免抖动
+    vrm.scene.position.z += talkCycle * 0.03; // 减小到0.03
+    // 上下摇头效果 - 减小幅度避免抖动
+    vrm.scene.rotation.x += talkCycle * 0.05; // 减小到0.05
+    // 增加左右摇头 - 减小幅度避免抖动
+    vrm.scene.rotation.y += Math.cos(animationTime * 10) * 0.03; // 减小到0.03
+    // 增加缩放效果（模拟张嘴）- 减小幅度避免抖动
+    talkScaleEffect = 1 + Math.abs(talkCycle) * 0.05; // 减小到5%
   }
   
   // 统一应用缩放效果（眨眼和说话取最大值）
   const finalScale = Math.max(blinkScaleEffect, talkScaleEffect);
   vrm.scene.scale.setScalar(finalScale);
-  
-  // 调试：显示缩放和位置变化
-  if (Math.floor(currentTime * 30) % 30 === 0) {
-    console.log(`[VRM细节] 缩放:${finalScale.toFixed(3)}, 眨眼:${blinkScaleEffect.toFixed(3)}, 说话:${talkScaleEffect.toFixed(3)}, 位置Z:${vrm.scene.position.z.toFixed(3)}`);
-  }
   
   // 更新 VRM 模型（每帧更新）
   vrm.update(1 / 30);
@@ -628,7 +618,7 @@ async function createVideoFromFrames(
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext('2d', { willReadFrequently: true }); // 性能优化
 
   if (!ctx) {
     throw new Error('Canvas context not available');
