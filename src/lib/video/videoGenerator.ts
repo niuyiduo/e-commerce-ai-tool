@@ -384,18 +384,18 @@ async function drawVRMAvatar(
  // 3D 动画效果：让角色"活"起来
   const animationTime = currentTime * 2; // 动画时间
   
-  // 1. 呼吸动画（身体上下起伏）- 减小幅度避免抖动
-  const breathingOffset = Math.sin(animationTime * 1.5) * 0.005; // 减小到0.005
+  // 1. 呼吸动画（身体上下起伏）- 减慢速度
+  const breathingOffset = Math.sin(animationTime * 0.8) * 0.005; // 降低频率到0.8
   vrm.scene.position.y += breathingOffset;
   
-  // 2. 整体模型微动（适配无骨骼模型）- 大幅减小避免抖动
+  // 2. 整体模型微动（适配无骨骼模型）- 减慢速度
   // 左右轻微摆动
-  vrm.scene.rotation.y += Math.sin(animationTime * 0.8) * 0.008; // 减小到0.008
-  vrm.scene.rotation.z = Math.sin(animationTime * 0.6) * 0.015; // 减小到0.015
+  vrm.scene.rotation.y += Math.sin(animationTime * 0.5) * 0.008; // 降低频率到0.5
+  vrm.scene.rotation.z = Math.sin(animationTime * 0.4) * 0.015; // 降低频率到0.4
   
-  // 3. 模拟随风效果（整体摆动）- 大幅减小避免抖动
-  const swayX = Math.sin(animationTime * 0.5) * 0.01; // 减小到0.01
-  const swayZ = Math.sin(animationTime * 0.7) * 0.012; // 减小到0.012
+  // 3. 模拟随风效果（整体摆动）- 减慢速度
+  const swayX = Math.sin(animationTime * 0.3) * 0.01; // 降低频率到0.3
+  const swayZ = Math.sin(animationTime * 0.4) * 0.012; // 降低频率到0.4
   vrm.scene.rotation.x = swayX;
   // vrm.scene.rotation.z 已经在上面设置了
   
@@ -419,8 +419,7 @@ async function drawVRMAvatar(
     }
   }
   
-  // 4. 眨眼效果（强制使用大幅度缩放动画）
-  let blinkScaleEffect = 1.0; // 默认缩放
+  // 4. 眨眼效果（仅使用表情系统，不再用缩放）
   const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5;
   const shouldBlink = blinkCycle > 0.85;
   
@@ -435,13 +434,7 @@ async function drawVRMAvatar(
     }
   }
   
-  // 同时使用大幅度缩放动画（无论是否有表情系统）
-  if (shouldBlink) {
-    blinkScaleEffect = 1 - (blinkCycle - 0.85) / 0.15 * 0.08; // 减小到8%缩放
-  }
-  
   // 5. 口型同步（强制使用大幅度动画）
-  let talkScaleEffect = 1.0; // 默认缩放
   
   // 尝试使用表情系统（如果有）
   if (vrm.expressionManager) {
@@ -486,20 +479,28 @@ async function drawVRMAvatar(
   
   // 同时使用大幅度动画（无论是否有表情系统）
   if (isSpeaking) {
-    const talkCycle = Math.sin(animationTime * 10); // 高频率
-    // Z轴前后移动（模拟嘴巴伸出）- 减小幅度避免抖动
-    vrm.scene.position.z += talkCycle * 0.03; // 减小到0.03
-    // 上下摇头效果 - 减小幅度避免抖动
-    vrm.scene.rotation.x += talkCycle * 0.05; // 减小到0.05
-    // 增加左右摇头 - 减小幅度避免抖动
-    vrm.scene.rotation.y += Math.cos(animationTime * 10) * 0.03; // 减小到0.03
-    // 增加缩放效果（模拟张嘴）- 减小幅度避免抖动
-    talkScaleEffect = 1 + Math.abs(talkCycle) * 0.05; // 减小到5%
+    const talkCycle = Math.sin(animationTime * 8); // 降低频率到8（原10）
+    
+    // 方案：通过Y轴缩放模拟嘴巴垂直张合
+    const mouthOpenScale = 1 + Math.abs(talkCycle) * 0.08; // 嘴巴开合时拉伸
+    vrm.scene.scale.set(
+      1.0, // X轴保持
+      mouthOpenScale, // Y轴拉伸（模拟嘴巴张开）
+      1.0  // Z轴保持
+    );
+    
+    // Z轴前后移动（模拟嘴巴伸出）- 增大幅度
+    vrm.scene.position.z += talkCycle * 0.04; // 增大到0.04
+    
+    // 轻微上下点头
+    vrm.scene.rotation.x += talkCycle * 0.04; // 轻微点头
+    
+    // 轻微左右摇头
+    vrm.scene.rotation.y += Math.cos(animationTime * 8) * 0.02; // 轻微摇头
+  } else {
+    // 不说话时保持正常大小
+    vrm.scene.scale.set(1.0, 1.0, 1.0);
   }
-  
-  // 统一应用缩放效果（眨眼和说话取最大值）
-  const finalScale = Math.max(blinkScaleEffect, talkScaleEffect);
-  vrm.scene.scale.setScalar(finalScale);
   
   // 更新 VRM 模型（每帧更新）
   vrm.update(1 / 30);
