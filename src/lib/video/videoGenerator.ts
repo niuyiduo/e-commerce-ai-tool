@@ -128,16 +128,38 @@ export async function generateVideo(
   const frames: ImageData[] = [];
   const totalFrames = Math.floor(duration * fps);
   
-  // 计算每段字幕的时间范围（精确到每帧）
+  // 动态计算音频检查间隔和估算时长
+  let audioCheckInterval: number;
+  let estimatedAudioDurationPerCaption: number;
+  
+  if (durationPerImage < 3) {
+    // 短视频：每0.5秒检查一次
+    audioCheckInterval = 0.5;
+    estimatedAudioDurationPerCaption = 1.5; // 估算每段音频1.5秒
+  } else {
+    // 长视频：每1.5秒检查一次
+    audioCheckInterval = 1.5;
+    estimatedAudioDurationPerCaption = 3; // 估算每段音频3秒
+  }
+  
+  console.log(`音频检查间隔: ${audioCheckInterval}秒, 估算单段时长: ${estimatedAudioDurationPerCaption}秒`);
+  
+  // 计算每段字幕的音频时间范围
   const captionTimeRanges: Array<{start: number, end: number}> = [];
+  let totalAudioDuration = 0;
+  
   if (enableVoice && finalCaptions.length > 0) {
-    const timePerImage = durationPerImage; // 每张图片的时间
+    const timePerImage = durationPerImage;
+    
     for (let i = 0; i < finalCaptions.length; i++) {
       const start = i * timePerImage;
-      const end = start + Math.min(3, timePerImage); // 每段字幕最多3秒
+      const end = start + Math.min(estimatedAudioDurationPerCaption, timePerImage);
       captionTimeRanges.push({ start, end });
+      totalAudioDuration = end;
     }
+    
     console.log('字幕时间范围:', captionTimeRanges);
+    console.log('音频总时长:', totalAudioDuration, '秒');
   }
   for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
     const currentTime = frameIndex / fps;
@@ -187,19 +209,21 @@ export async function generateVideo(
     
     // 添加虚拟形象（如果启用）
     if (enableAvatar) {
-      // 精确判断当前时间是否有音频播放
+      // 根据检查间隔动态判断是否有音频播放
       let isSpeaking = false;
+      
       if (enableVoice && captionTimeRanges.length > 0) {
-        // 检查当前时间是否在任何字幕的时间范围内
+        // 检查当前时间是否在音频范围内（每帧都检查）
         isSpeaking = captionTimeRanges.some(range => 
           currentTime >= range.start && currentTime < range.end
         );
       }
       
-      // 调试日志（每30帧输出一次）
-      if (frameIndex % 30 === 0) {
+      // 调试日志（按检查间隔输出）
+      const shouldLog = Math.abs(currentTime % audioCheckInterval) < (1 / fps);
+      if (shouldLog) {
         const currentRange = captionTimeRanges.find(r => currentTime >= r.start && currentTime < r.end);
-        console.log(`帧${frameIndex}: 时间=${currentTime.toFixed(2)}s, 说话=${isSpeaking}, 当前范围=${currentRange ? `${currentRange.start.toFixed(2)}-${currentRange.end.toFixed(2)}` : '无'}`);
+        console.log(`时间=${currentTime.toFixed(2)}s, 说话=${isSpeaking}, 音频范围=${currentRange ? `${currentRange.start.toFixed(2)}-${currentRange.end.toFixed(2)}` : '无'}`);
       }
       
       if (vrmData) {
