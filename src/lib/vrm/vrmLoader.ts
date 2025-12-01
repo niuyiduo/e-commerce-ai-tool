@@ -44,8 +44,8 @@ export async function loadVRM(config: VRMConfig): Promise<VRM | null> {
     // 旋转模型使其面向摄像机（VRM标准旋转）
     VRMUtils.rotateVRM0(vrm);
     
-    // 修正模型朝向：原本向右侧，需要向左旋转90度回正
-    vrm.scene.rotation.y = -Math.PI / 2; // 逆时针旋转90度
+    // 修正模型朝向：原本向右侧，需要向右旋转90度回正
+    vrm.scene.rotation.y = Math.PI / 2; // 顺时针旋转90度
 
     console.log('VRM 模型加载成功:', vrm);
     return vrm;
