@@ -43,6 +43,9 @@ export async function loadVRM(config: VRMConfig): Promise<VRM | null> {
 
     // 旋转模型使其面向摄像机
     VRMUtils.rotateVRM0(vrm);
+    
+    // 强制旋转模型正对摄像机（Y轴旋转180度）
+    vrm.scene.rotation.y = Math.PI;
 
     console.log('VRM 模型加载成功:', vrm);
     return vrm;
@@ -60,14 +63,15 @@ export function createVRMScene(canvasWidth: number, canvasHeight: number) {
   const scene = new THREE.Scene();
   scene.background = null; // 透明背景
 
-  // 摄像机
+  // 摄像机（调整到能看到全身正面）
   const camera = new THREE.PerspectiveCamera(
-    35,  // 视野角度稍大
+    30,  // FOV 30度，能看到完整身体
     canvasWidth / canvasHeight,
     0.1,
     20
   );
-  camera.position.set(0, 1.2, 2); // 调整位置：正面、稍高、更近
+  camera.position.set(0, 0.8, 3.5); // 正面、居中高度、拉远到能看全身
+  camera.lookAt(0, 0.8, 0); // 看向模型中心（腰部位置）
 
   // 光源（增强正面光照）
   const light = new THREE.DirectionalLight(0xffffff, 1.5); // 增强亮度

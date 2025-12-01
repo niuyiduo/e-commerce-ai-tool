@@ -85,13 +85,13 @@ export async function generateVideo(
         const { loadVRM, createVRMScene } = await import('@/lib/vrm/vrmLoader');
         const vrm = await loadVRM({
           modelPath: '/avatars/female/中国风可爱女娃娃.vrm',
-          position: { x: 0, y: 0, z: 0 },
-          scale: 1,
+          position: { x: 0, y: -0.9, z: 0 }, // Y轴降低，显示完整身体
+          scale: 1.0, // 适当缩放
         });
         
         if (vrm) {
-          // 创建 3D 渲染场景
-          const scene3D = createVRMScene(200, 200);
+          // 创建 3D 渲染场景（增大渲染尺寸以提高清晰度）
+          const scene3D = createVRMScene(400, 400);
           scene3D.scene.add(vrm.scene);
           vrmData = { vrm, scene3D };
           console.log('✅ 高级 VRM 3D 形象加载成功');
@@ -355,7 +355,7 @@ async function drawVRMAvatar(
   const { vrm, scene3D } = vrmData;
   const { scene, camera, renderer } = scene3D;
   
-  const avatarSize = 250; // VRM 形象增大（原 150）
+  const avatarSize = 350; // VRM 形象增大到350px（原250）
   const padding = 20;
   
   // 计算位置
@@ -378,18 +378,20 @@ async function drawVRMAvatar(
   // 口型同步：根据说话状态调整表情
   if (vrm.expressionManager) {
     if (isSpeaking) {
-      // 模拟口型动画（增强张嘉幅度）
-      const mouthValue = (Math.sin(currentTime * 20) + 1) / 2; // 加快频率，0-1 范围
+      // 模拟口型动画（增强张嘴幅度）
+      const mouthValue = (Math.sin(currentTime * 15) + 1) / 2; // 频率 15Hz，0-1 范围
       try {
-        vrm.expressionManager.setValue('aa', mouthValue * 1.0); // 增大到 1.0（原 0.8）
-        vrm.expressionManager.setValue('happy', 0.2); // 减小微笑（原 0.3）
+        vrm.expressionManager.setValue('aa', mouthValue * 1.0); // 张嘴幅度 100%
+        vrm.expressionManager.setValue('ih', mouthValue * 0.3); // 伊
+        vrm.expressionManager.setValue('ou', mouthValue * 0.2); // 欧
       } catch (e) {
         // 忽略不存在的表情
       }
     } else {
       try {
         vrm.expressionManager.setValue('aa', 0);
-        vrm.expressionManager.setValue('happy', 0);
+        vrm.expressionManager.setValue('ih', 0);
+        vrm.expressionManager.setValue('ou', 0);
       } catch (e) {
         // 忽略
       }
