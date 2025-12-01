@@ -12,6 +12,9 @@ interface VideoGeneratorOptions {
   autoGenerateCaptions?: boolean; // 是否自动生成默认讲解
   enableVoice?: boolean; // 是否启用语音配音（可选）
   voiceType?: 'male' | 'female' | 'child'; // 配音音色（可选）
+  enableAvatar?: boolean; // 是否启用虚拟形象
+  avatarStyle?: 'female' | 'male' | 'robot' | 'cute'; // 虚拟形象风格
+  avatarPosition?: 'bottom-left' | 'bottom-right' | 'top-right'; // 形象位置
 }
 
 /**
@@ -30,7 +33,10 @@ export async function generateVideo(
     captions = [],
     autoGenerateCaptions = true,
     enableVoice = false,  // 新增：是否启用配音
-    voiceType = 'female'  // 新增：配音音色
+    voiceType = 'female',  // 新增：配音音色
+    enableAvatar = false,  // 新增：是否启用虚拟形象
+    avatarStyle = 'female',  // 新增：形象风格
+    avatarPosition = 'bottom-right'  // 新增：形象位置
   } = options;
 
   // 验证参数
@@ -65,6 +71,16 @@ export async function generateVideo(
   const loadedImages = await Promise.all(
     images.map(src => loadImage(src))
   );
+
+  // 加载虚拟形象（如果启用）
+  let avatarImage: HTMLImageElement | null = null;
+  if (enableAvatar) {
+    try {
+      avatarImage = await loadAvatarImage(avatarStyle);
+    } catch (error) {
+      console.warn('虚拟形象加载失败，将不显示形象:', error);
+    }
+  }
 
   // 设置画布尺寸（使用第一张图片的尺寸）
   const firstImg = loadedImages[0];
@@ -116,9 +132,15 @@ export async function generateVideo(
       ctx.drawImage(loadedImages[imageIndex], 0, 0, canvas.width, canvas.height);
     }
     
-    // 添加讲解字幕（如果有）
+   // 添加讲解字幕（如果有）
     if (finalCaptions.length > imageIndex && finalCaptions[imageIndex]) {
       drawCaption(ctx, canvas.width, canvas.height, finalCaptions[imageIndex]);
+    }
+    
+    // 添加虚拟形象（如果启用）
+    if (enableAvatar && avatarImage) {
+      const isSpeaking = !!(enableVoice && finalCaptions[imageIndex]); // 判断是否在"说话"
+      drawAvatar(ctx, canvas.width, canvas.height, avatarImage, avatarPosition, currentTime, isSpeaking);
     }
     
     // 保存帧数据
@@ -150,6 +172,134 @@ function loadImage(src: string): Promise<HTMLImageElement> {
     
     img.src = src;
   });
+}
+
+/**
+ * 加载虚拟形象图片（使用 Emoji/SVG 作为占位符）
+ */
+async function loadAvatarImage(style: 'female' | 'male' | 'robot' | 'cute'): Promise<HTMLImageElement> {
+  // 不同风格的虚拟形象 Emoji
+  const avatarEmojis = {
+    female: '👩',     // 女性形象
+    male: '👨',       // 男性形象
+    robot: '🤖',     // 机器人（中性）
+    cute: '🐱',      // 可爱猫咪（中性）
+  };
+
+  const emoji = avatarEmojis[style];
+  
+  // 创建一个 Canvas 来渲染 Emoji
+  const canvas = document.createElement('canvas');
+  canvas.width = 200;
+  canvas.height = 200;
+  const ctx = canvas.getContext('2d');
+  
+  if (!ctx) {
+    throw new Error('Canvas context not available');
+  }
+  
+  // 绘制圆形背景
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+  ctx.beginPath();
+  ctx.arc(100, 100, 90, 0, Math.PI * 2);
+  ctx.fill();
+  
+  // 绘制边框
+  ctx.strokeStyle = '#FE2C55';
+  ctx.lineWidth = 4;
+  ctx.stroke();
+  
+  // 绘制 Emoji
+  ctx.font = '120px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(emoji, 100, 110);
+  
+  // 转换为 Image
+  return new Promise((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error('Failed to create avatar blob'));
+        return;
+      }
+      
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('Failed to load avatar image'));
+      img.src = URL.createObjectURL(blob);
+    });
+  });
+}
+
+/**
+ * 绘制虚拟形象
+ */
+function drawAvatar(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  avatarImage: HTMLImageElement,
+  position: 'bottom-left' | 'bottom-right' | 'top-right',
+  currentTime: number,
+  isSpeaking: boolean
+) {
+  const avatarSize = 120; // 形象大小
+  const padding = 20; // 边距
+  
+  // 计算位置
+  let x: number, y: number;
+  switch (position) {
+    case 'bottom-left':
+      x = padding;
+      y = height - avatarSize - padding;
+      break;
+    case 'bottom-right':
+      x = width - avatarSize - padding;
+      y = height - avatarSize - padding;
+      break;
+    case 'top-right':
+      x = width - avatarSize - padding;
+      y = padding;
+      break;
+  }
+  
+  // 说话动画：缩放效果（模拟呼吸）
+  let scale = 1;
+  if (isSpeaking) {
+    const breatheSpeed = 3; // 呼吸速度
+    const breatheAmount = 0.05; // 呼吸幅度
+    scale = 1 + Math.sin(currentTime * breatheSpeed * Math.PI) * breatheAmount;
+  }
+  
+  // 保存当前状态
+  ctx.save();
+  
+  // 移动到形象中心点
+  ctx.translate(x + avatarSize / 2, y + avatarSize / 2);
+  
+  // 应用缩放
+  ctx.scale(scale, scale);
+  
+  // 绘制形象（从中心点绘制）
+  ctx.drawImage(
+    avatarImage,
+    -avatarSize / 2,
+    -avatarSize / 2,
+    avatarSize,
+    avatarSize
+  );
+  
+  // 添加发光效果（说话时）
+  if (isSpeaking) {
+    ctx.strokeStyle = 'rgba(254, 44, 85, 0.6)';
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.arc(0, 0, avatarSize / 2 + 5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  
+  // 恢复状态
+  ctx.restore();
 }
 
 /**

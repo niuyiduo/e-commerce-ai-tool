@@ -28,6 +28,9 @@ export default function Home() {
   const [useCustomCaptions, setUseCustomCaptions] = useState(false); // 是否自定义字幕
   const [voiceType, setVoiceType] = useState<'male' | 'female'>('female'); // 配音音色
   const [enableVoice, setEnableVoice] = useState(false); // 是否启用配音
+  const [enableAvatar, setEnableAvatar] = useState(false); // 是否启用虚拟形象
+  const [avatarStyle, setAvatarStyle] = useState<'female' | 'male' | 'robot' | 'cute'>('female'); // 形象风格
+  const [avatarPosition, setAvatarPosition] = useState<'bottom-left' | 'bottom-right' | 'top-right'>('bottom-right'); // 形象位置
   
   // 功能模式：'image' 或 'video'
   const [mode, setMode] = useState<'image' | 'video'>('image');
@@ -260,9 +263,13 @@ export default function Home() {
         fps: 30,
         captions: useCustomCaptions && videoCaptions.length > 0 ? videoCaptions : undefined,
         autoGenerateCaptions: !useCustomCaptions || videoCaptions.length === 0,
-        // 新增：配音参数
+        // 配音参数
         enableVoice,
         voiceType,
+        // 虚拟形象参数
+        enableAvatar,
+        avatarStyle,
+        avatarPosition,
       });
       
       const url = URL.createObjectURL(videoBlob);
@@ -1471,6 +1478,127 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                   <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
                     <p className="text-sm text-gray-400">
                       🔇 当前未启用配音，视频将仅显示字幕无声音
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {/* 虚拟形象设置 */}
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-3">
+                  <label className="block text-sm font-medium text-white">
+                    🤖 虚拟形象（可选）
+                  </label>
+                  <button
+                    onClick={() => setEnableAvatar(!enableAvatar)}
+                    className={`px-3 py-1 text-sm rounded-lg transition-colors ${
+                      enableAvatar 
+                        ? 'bg-gradient-to-r from-[#FE2C55] to-[#FF6B95] text-white' 
+                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                    }`}
+                  >
+                    {enableAvatar ? '✅ 已启用' : '关闭'}
+                  </button>
+                </div>
+                
+                {enableAvatar ? (
+                  <div className="space-y-3">
+                    <p className="text-xs text-gray-300 mb-2 font-medium">选择虚拟形象风格：</p>
+                    <div className="grid grid-cols-4 gap-3">
+                      <button
+                        onClick={() => setAvatarStyle('female')}
+                        className={`px-4 py-3 rounded-lg border-2 transition-all ${
+                          avatarStyle === 'female'
+                            ? 'border-[#FE2C55] bg-[#FE2C55]/10 text-[#FE2C55] font-semibold'
+                            : 'border-white/20 hover:border-[#FE2C55]/50 text-gray-300'
+                        }`}
+                      >
+                        👩 女生
+                      </button>
+                      <button
+                        onClick={() => setAvatarStyle('male')}
+                        className={`px-4 py-3 rounded-lg border-2 transition-all ${
+                          avatarStyle === 'male'
+                            ? 'border-[#00D4FF] bg-[#00D4FF]/10 text-[#00D4FF] font-semibold'
+                            : 'border-white/20 hover:border-[#00D4FF]/50 text-gray-300'
+                        }`}
+                      >
+                        👨 男生
+                      </button>
+                      <button
+                        onClick={() => setAvatarStyle('robot')}
+                        className={`px-4 py-3 rounded-lg border-2 transition-all ${
+                          avatarStyle === 'robot'
+                            ? 'border-[#FF6B00] bg-[#FF6B00]/10 text-[#FF6B00] font-semibold'
+                            : 'border-white/20 hover:border-[#FF6B00]/50 text-gray-300'
+                        }`}
+                      >
+                        🤖 机器人
+                      </button>
+                      <button
+                        onClick={() => setAvatarStyle('cute')}
+                        className={`px-4 py-3 rounded-lg border-2 transition-all ${
+                          avatarStyle === 'cute'
+                            ? 'border-[#FFD700] bg-[#FFD700]/10 text-[#FFD700] font-semibold'
+                            : 'border-white/20 hover:border-[#FFD700]/50 text-gray-300'
+                        }`}
+                      >
+                        🐱 猫咪
+                      </button>
+                    </div>
+                    
+                    <p className="text-xs text-gray-300 mb-2 font-medium mt-3">形象位置：</p>
+                    <div className="grid grid-cols-3 gap-3">
+                      <button
+                        onClick={() => setAvatarPosition('bottom-left')}
+                        className={`px-4 py-2 rounded-lg border-2 transition-all text-xs ${
+                          avatarPosition === 'bottom-left'
+                            ? 'border-[#00D4FF] bg-[#00D4FF]/10 text-[#00D4FF] font-semibold'
+                            : 'border-white/20 hover:border-[#00D4FF]/50 text-gray-300'
+                        }`}
+                      >
+                        ↙️ 左下角
+                      </button>
+                      <button
+                        onClick={() => setAvatarPosition('bottom-right')}
+                        className={`px-4 py-2 rounded-lg border-2 transition-all text-xs ${
+                          avatarPosition === 'bottom-right'
+                            ? 'border-[#00D4FF] bg-[#00D4FF]/10 text-[#00D4FF] font-semibold'
+                            : 'border-white/20 hover:border-[#00D4FF]/50 text-gray-300'
+                        }`}
+                      >
+                        ↘️ 右下角
+                      </button>
+                      <button
+                        onClick={() => setAvatarPosition('top-right')}
+                        className={`px-4 py-2 rounded-lg border-2 transition-all text-xs ${
+                          avatarPosition === 'top-right'
+                            ? 'border-[#00D4FF] bg-[#00D4FF]/10 text-[#00D4FF] font-semibold'
+                            : 'border-white/20 hover:border-[#00D4FF]/50 text-gray-300'
+                        }`}
+                      >
+                        ↗️ 右上角
+                      </button>
+                    </div>
+                    
+                    <div className="p-3 bg-[#FE2C55]/10 border border-[#FE2C55]/30 rounded-lg mt-3">
+                      <p className="text-sm text-[#FE2C55]">
+                        ✨ 已启用 <span className="font-semibold">
+                          {avatarStyle === 'female' && '女生形象'}
+                          {avatarStyle === 'male' && '男生形象'}
+                          {avatarStyle === 'robot' && '机器人形象'}
+                          {avatarStyle === 'cute' && '可爱猫咪'}
+                        </span> 虚拟形象，将显示在视频{avatarPosition === 'bottom-left' ? '左下角' : avatarPosition === 'bottom-right' ? '右下角' : '右上角'}
+                      </p>
+                      <p className="text-xs text-gray-300 mt-1">
+                        💡 当启用配音时，形象会在"说话"时有动画效果
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
+                    <p className="text-sm text-gray-400">
+                      👤 当前未启用虚拟形象
                     </p>
                   </div>
                 )}
