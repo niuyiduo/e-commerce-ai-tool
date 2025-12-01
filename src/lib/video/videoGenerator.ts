@@ -384,20 +384,28 @@ async function drawVRMAvatar(
  // 3D 动画效果：让角色"活"起来
   const animationTime = currentTime * 2; // 动画时间
   
-  // 1. 呼吸动画（身体上下起伏）- 减慢速度
-  const breathingOffset = Math.sin(animationTime * 0.8) * 0.005; // 降低频率到0.8
-  vrm.scene.position.y += breathingOffset;
-  
-  // 2. 整体模型微动（适配无骨骼模型）- 减慢速度
-  // 左右轻微摆动
-  vrm.scene.rotation.y += Math.sin(animationTime * 0.5) * 0.008; // 降低频率到0.5
-  vrm.scene.rotation.z = Math.sin(animationTime * 0.4) * 0.015; // 降低频率到0.4
-  
-  // 3. 模拟随风效果（整体摆动）- 减慢速度
-  const swayX = Math.sin(animationTime * 0.3) * 0.01; // 降低频率到0.3
-  const swayZ = Math.sin(animationTime * 0.4) * 0.012; // 降低频率到0.4
-  vrm.scene.rotation.x = swayX;
-  // vrm.scene.rotation.z 已经在上面设置了
+  // 只在说话时才有动画，不说话时完全静止
+  if (isSpeaking) {
+    // 1. 呼吸动画（身体上下起伏）- 减慢速度
+    const breathingOffset = Math.sin(animationTime * 0.8) * 0.005; // 降低频率到0.8
+    vrm.scene.position.y += breathingOffset;
+    
+    // 2. 整体模型微动（适配无骨骼模型）- 减慢速度
+    // 左右轻微摆动
+    vrm.scene.rotation.y += Math.sin(animationTime * 0.5) * 0.008; // 降低频率到0.5
+    vrm.scene.rotation.z = Math.sin(animationTime * 0.4) * 0.015; // 降低频率到0.4
+    
+    // 3. 模拟随风效果（整体摆动）- 减慢速度
+    const swayX = Math.sin(animationTime * 0.3) * 0.01; // 降低频率到0.3
+    const swayZ = Math.sin(animationTime * 0.4) * 0.012; // 降低频率到0.4
+    vrm.scene.rotation.x = swayX;
+  } else {
+    // 不说话时：重置所有动画，保持正面静止
+    vrm.scene.position.y = 0;
+    vrm.scene.rotation.x = 0;
+    vrm.scene.rotation.y = 0;
+    vrm.scene.rotation.z = 0;
+  }
   
   // 如果有骨骼系统，则使用骨骼动画（兼容性处理）
   if (vrm.humanoid) {
