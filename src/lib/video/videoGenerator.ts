@@ -127,6 +127,9 @@ export async function generateVideo(
   // 生成视频帧
   const frames: ImageData[] = [];
   const totalFrames = Math.floor(duration * fps);
+  
+  // 计算音频总时长（每段字幕约3秒）
+  const audioDuration = enableVoice ? finalCaptions.length * 3 : 0; // 3秒/段
 
   for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
     const currentTime = frameIndex / fps;
@@ -176,7 +179,8 @@ export async function generateVideo(
     
     // 添加虚拟形象（如果启用）
     if (enableAvatar) {
-      const isSpeaking = !!(enableVoice && finalCaptions[imageIndex]); // 判断是否在"说话"
+      // 根据音频总时长判断是否还在说话（而不是根据当前帧的字幕）
+      const isSpeaking = enableVoice && currentTime < audioDuration;
       
       if (vrmData) {
         // 高级模式：VRM 3D 形象固定在右上角
