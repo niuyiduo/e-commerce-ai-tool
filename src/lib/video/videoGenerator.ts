@@ -424,12 +424,13 @@ async function drawVRMAvatar(
     }
   }
   
-  // 4. 眨眼效果（适配无表情系统的模型）
-  // 如果有表情系统，使用表情；否则用缩放模拟
+  // 4. 眨眼效果（强制使用大幅度缩放动画）
   let blinkScaleEffect = 1.0; // 默认缩放
+  const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5;
+  const shouldBlink = blinkCycle > 0.85;
+  
+  // 尝试使用表情系统（如果有）
   if (vrm.expressionManager) {
-    const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5;
-    const shouldBlink = blinkCycle > 0.85;
     try {
       vrm.expressionManager.setValue('blink', shouldBlink ? 1.0 : 0);
       vrm.expressionManager.setValue('blinkLeft', shouldBlink ? 1.0 : 0);
@@ -437,19 +438,18 @@ async function drawVRMAvatar(
     } catch (e) {
       // 忽略
     }
-  } else {
-    // 无表情系统：用轻微缩放模拟眨眼
-    const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5;
-    const shouldBlink = blinkCycle > 0.85;
-    if (shouldBlink) {
-      blinkScaleEffect = 1 - (blinkCycle - 0.85) / 0.15 * 0.15; // 眨眼时缩小15%
-    }
   }
   
-  // 5. 口型同步（适配无表情系统的模型）
+  // 同时使用大幅度缩放动画（无论是否有表情系统）
+  if (shouldBlink) {
+    blinkScaleEffect = 1 - (blinkCycle - 0.85) / 0.15 * 0.2; // 增大到20%缩放
+  }
+  
+  // 5. 口型同步（强制使用大幅度动画）
   let talkScaleEffect = 1.0; // 默认缩放
+  
+  // 尝试使用表情系统（如果有）
   if (vrm.expressionManager) {
-    // 有表情系统：使用1-2-3口型
     if (isSpeaking) {
       const mouthValue = Math.abs(Math.sin(animationTime * 10)) * 1.0;
       const cyclePhase = (animationTime * 10) % (Math.PI * 2);
@@ -487,19 +487,19 @@ async function drawVRMAvatar(
       }
     }
     vrm.expressionManager.update();
-  } else {
-    // 无表情系统：用整体前后移动 + 旋转模拟张嘴
-    if (isSpeaking) {
-      const talkCycle = Math.sin(animationTime * 10); // 高频率
-      // Z轴前后移动（模拟嘴巴伸出）- 增大幅度
-      vrm.scene.position.z += talkCycle * 0.08; // 原0.015→0.08
-      // 上下摇头效果 - 增大幅度
-      vrm.scene.rotation.x += talkCycle * 0.15; // 原0.03→0.15
-      // 增加左右摇头
-      vrm.scene.rotation.y += Math.cos(animationTime * 10) * 0.1;
-      // 增加缩放效果（模拟张嘴）
-      talkScaleEffect = 1 + Math.abs(talkCycle) * 0.08;
-    }
+  }
+  
+  // 同时使用大幅度动画（无论是否有表情系统）
+  if (isSpeaking) {
+    const talkCycle = Math.sin(animationTime * 10); // 高频率
+    // Z轴前后移动（模拟嘴巴伸出）- 大幅度
+    vrm.scene.position.z += talkCycle * 0.12; // 增大到0.12
+    // 上下摇头效果 - 大幅度
+    vrm.scene.rotation.x += talkCycle * 0.2; // 增大到0.2
+    // 增加左右摇头
+    vrm.scene.rotation.y += Math.cos(animationTime * 10) * 0.15; // 增大到0.15
+    // 增加缩放效果（模拟张嘴）
+    talkScaleEffect = 1 + Math.abs(talkCycle) * 0.12; // 增大到12%
   }
   
   // 统一应用缩放效果（眨眼和说话取最大值）
