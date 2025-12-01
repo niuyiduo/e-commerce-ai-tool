@@ -420,18 +420,28 @@ async function drawVRMAvatar(
   // 4. 口型同步：根据说话状态调整表情
   if (vrm.expressionManager) {
     if (isSpeaking) {
-      // 模拟口型动画（最大幅度张嘴）
+      // 模拟口型动画（使用数字口型，幅度更大）
       const mouthValue = Math.abs(Math.sin(animationTime * 10)) * 1.0; // 高频率张合
+      const cyclePhase = (animationTime * 10) % (Math.PI * 2); // 获取当前相位
+      
       try {
-        // 多种口型叠加，增强可见度
-        vrm.expressionManager.setValue('aa', mouthValue); // 张嘴 100%
-        vrm.expressionManager.setValue('A', mouthValue); // 大写A
-        vrm.expressionManager.setValue('ih', mouthValue * 0.6); // 伊
-        vrm.expressionManager.setValue('I', mouthValue * 0.6); // 大写I
-        vrm.expressionManager.setValue('ou', mouthValue * 0.5); // 欧
-        vrm.expressionManager.setValue('O', mouthValue * 0.5); // 大写O
-        vrm.expressionManager.setValue('ee', mouthValue * 0.4); // 嘉
-        vrm.expressionManager.setValue('E', mouthValue * 0.4); // 大写E
+        // 根据相位切换不同口型（模拟说"1-2-3"的效果）
+        if (cyclePhase < Math.PI * 2 / 3) {
+          // 第一阶段："1" 口型（嘴巴最大）
+          vrm.expressionManager.setValue('aa', 1.0);
+          vrm.expressionManager.setValue('A', 1.0);
+        } else if (cyclePhase < Math.PI * 4 / 3) {
+          // 第二阶段："2" 口型（嘴巴中等）
+          vrm.expressionManager.setValue('ih', 0.8);
+          vrm.expressionManager.setValue('I', 0.8);
+          vrm.expressionManager.setValue('ee', 0.6);
+          vrm.expressionManager.setValue('E', 0.6);
+        } else {
+          // 第三阶段："3" 口型（嘴巴圆形）
+          vrm.expressionManager.setValue('ou', 0.9);
+          vrm.expressionManager.setValue('O', 0.9);
+          vrm.expressionManager.setValue('U', 0.7);
+        }
       } catch (e) {
         // 忽略不存在的表情
       }
@@ -446,6 +456,7 @@ async function drawVRMAvatar(
         vrm.expressionManager.setValue('O', 0);
         vrm.expressionManager.setValue('ee', 0);
         vrm.expressionManager.setValue('E', 0);
+        vrm.expressionManager.setValue('U', 0);
       } catch (e) {
         // 忽略
       }
