@@ -388,72 +388,87 @@ async function drawVRMAvatar(
   const breathingOffset = Math.sin(animationTime * 1.5) * 0.008; // 更轻微（原 0.02）
   vrm.scene.position.y += breathingOffset;
   
-  // 2. 头部微动（左右轻微摆动）
+  // 2. 整体模型微动（适配无骨骼模型）
+  // 左右轻微摆动
+  vrm.scene.rotation.y += Math.sin(animationTime * 0.8) * 0.005; // 微微旋转
+  vrm.scene.rotation.z = Math.sin(animationTime * 0.6) * 0.02; // 微微倾斜
+  
+  // 3. 模拟随风效果（整体摆动）
+  const swayX = Math.sin(animationTime * 0.5) * 0.01; // X轴摆动
+  const swayZ = Math.sin(animationTime * 0.7) * 0.015; // Z轴摆动
+  vrm.scene.rotation.x = swayX;
+  // vrm.scene.rotation.z 已经在上面设置了
+  
+  // 如果有骨骼系统，则使用骨骼动画（兼容性处理）
   if (vrm.humanoid) {
     const head = vrm.humanoid.getNormalizedBoneNode('head');
     if (head) {
-      head.rotation.y = Math.sin(animationTime * 0.8) * 0.1; // 左右摆动
-      head.rotation.z = Math.sin(animationTime * 0.6) * 0.05; // 微微倾斜
+      head.rotation.y = Math.sin(animationTime * 0.8) * 0.1;
+      head.rotation.z = Math.sin(animationTime * 0.6) * 0.05;
     }
     
-    // 身体随风飘动效果
     const spine = vrm.humanoid.getNormalizedBoneNode('spine');
     if (spine) {
-      spine.rotation.z = Math.sin(animationTime * 0.5) * 0.03; // 身体左右轻微摆动
-      spine.rotation.x = Math.sin(animationTime * 0.7) * 0.02; // 前后轻微摆动
+      spine.rotation.z = Math.sin(animationTime * 0.5) * 0.03;
+      spine.rotation.x = Math.sin(animationTime * 0.7) * 0.02;
     }
     
-    // 头发/装饰物飘动（如果有）
     const chest = vrm.humanoid.getNormalizedBoneNode('chest');
     if (chest) {
-      chest.rotation.z = Math.sin(animationTime * 0.6 + 1) * 0.025; // 上半身随风
+      chest.rotation.z = Math.sin(animationTime * 0.6 + 1) * 0.025;
     }
   }
   
-  // 3. 眨眼动画（慢速大幅度眨眼）
+  // 4. 眨眼效果（适配无表情系统的模型）
+  // 如果有表情系统，使用表情；否则用缩放模拟
   if (vrm.expressionManager) {
-    const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5; // 降低频率（原 3）
-    const shouldBlink = blinkCycle > 0.85; // 增大眨眼时长（15% 时间，原 10%）
+    const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5;
+    const shouldBlink = blinkCycle > 0.85;
     try {
-      vrm.expressionManager.setValue('blink', shouldBlink ? 1.0 : 0); // 全闭合
+      vrm.expressionManager.setValue('blink', shouldBlink ? 1.0 : 0);
       vrm.expressionManager.setValue('blinkLeft', shouldBlink ? 1.0 : 0);
       vrm.expressionManager.setValue('blinkRight', shouldBlink ? 1.0 : 0);
     } catch (e) {
       // 忽略
     }
+  } else {
+    // 无表情系统：用轻微缩放模拟眨眼
+    const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5;
+    const shouldBlink = blinkCycle > 0.85;
+    if (shouldBlink) {
+      const blinkScale = 1 - (blinkCycle - 0.85) / 0.15 * 0.03; // 轻微缩小
+      vrm.scene.scale.setScalar(blinkScale);
+    } else {
+      vrm.scene.scale.setScalar(1.0);
+    }
   }
   
-  // 4. 口型同步：根据说话状态调整表情
+  // 5. 口型同步（适配无表情系统的模型）
   if (vrm.expressionManager) {
+    // 有表情系统：使用1-2-3口型
     if (isSpeaking) {
-      // 模拟口型动画（使用数字口型，幅度更大）
-      const mouthValue = Math.abs(Math.sin(animationTime * 10)) * 1.0; // 高频率张合
-      const cyclePhase = (animationTime * 10) % (Math.PI * 2); // 获取当前相位
+      const mouthValue = Math.abs(Math.sin(animationTime * 10)) * 1.0;
+      const cyclePhase = (animationTime * 10) % (Math.PI * 2);
       
       try {
-        // 根据相位切换不同口型（模拟说"1-2-3"的效果）
         if (cyclePhase < Math.PI * 2 / 3) {
-          // 第一阶段："1" 口型（嘴巴最大）
           vrm.expressionManager.setValue('aa', 1.0);
           vrm.expressionManager.setValue('A', 1.0);
         } else if (cyclePhase < Math.PI * 4 / 3) {
-          // 第二阶段："2" 口型（嘴巴中等）
           vrm.expressionManager.setValue('ih', 0.8);
           vrm.expressionManager.setValue('I', 0.8);
           vrm.expressionManager.setValue('ee', 0.6);
           vrm.expressionManager.setValue('E', 0.6);
         } else {
-          // 第三阶段："3" 口型（嘴巴圆形）
           vrm.expressionManager.setValue('ou', 0.9);
           vrm.expressionManager.setValue('O', 0.9);
           vrm.expressionManager.setValue('U', 0.7);
         }
       } catch (e) {
-        // 忽略不存在的表情
+        // 忽略
       }
     } else {
       try {
-        // 闭嘴状态：清空所有口型表情
         vrm.expressionManager.setValue('aa', 0);
         vrm.expressionManager.setValue('A', 0);
         vrm.expressionManager.setValue('ih', 0);
@@ -468,6 +483,15 @@ async function drawVRMAvatar(
       }
     }
     vrm.expressionManager.update();
+  } else {
+    // 无表情系统：用整体前后移动 + 旋转模拟张嘴
+    if (isSpeaking) {
+      const talkCycle = Math.sin(animationTime * 10); // 高频率
+      // Z轴前后移动（模拟嘴巴伸出）
+      vrm.scene.position.z += talkCycle * 0.015;
+      // 轻微上下摇头效果
+      vrm.scene.rotation.x += talkCycle * 0.03;
+    }
   }
   
   // 更新 VRM 模型（每帧更新）
