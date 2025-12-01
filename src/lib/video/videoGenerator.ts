@@ -375,15 +375,42 @@ async function drawVRMAvatar(
       break;
   }
   
-  // 口型同步：根据说话状态调整表情
+ // 3D 动画效果：让角色"活"起来
+  const animationTime = currentTime * 2; // 动画时间
+  
+  // 1. 呼吸动画（身体上下起伏）
+  const breathingOffset = Math.sin(animationTime * 1.5) * 0.02; // 轻微上下
+  vrm.scene.position.y += breathingOffset;
+  
+  // 2. 头部微动（左右轻微摆动）
+  if (vrm.humanoid) {
+    const head = vrm.humanoid.getNormalizedBoneNode('head');
+    if (head) {
+      head.rotation.y = Math.sin(animationTime * 0.8) * 0.1; // 左右摆动
+      head.rotation.z = Math.sin(animationTime * 0.6) * 0.05; // 微微倾斜
+    }
+  }
+  
+  // 3. 眨眼动画（随机眨眼）
+  if (vrm.expressionManager) {
+    const blinkCycle = Math.sin(animationTime * 3) * 0.5 + 0.5; // 0-1 循环
+    const shouldBlink = blinkCycle > 0.9; // 10% 时间眨眼
+    try {
+      vrm.expressionManager.setValue('blink', shouldBlink ? 1.0 : 0);
+    } catch (e) {
+      // 忽略
+    }
+  }
+  
+  // 4. 口型同步：根据说话状态调整表情
   if (vrm.expressionManager) {
     if (isSpeaking) {
-      // 模拟口型动画（增强张嘴幅度）
-      const mouthValue = (Math.sin(currentTime * 15) + 1) / 2; // 频率 15Hz，0-1 范围
+      // 模拟口型动画（大幅度张嘴）
+      const mouthValue = Math.abs(Math.sin(animationTime * 8)) * 1.0; // 高频率张合
       try {
-        vrm.expressionManager.setValue('aa', mouthValue * 1.0); // 张嘴幅度 100%
-        vrm.expressionManager.setValue('ih', mouthValue * 0.3); // 伊
-        vrm.expressionManager.setValue('ou', mouthValue * 0.2); // 欧
+        vrm.expressionManager.setValue('aa', mouthValue); // 张嘴幅度 100%
+        vrm.expressionManager.setValue('ih', mouthValue * 0.4); // 伊
+        vrm.expressionManager.setValue('ou', mouthValue * 0.3); // 欧
       } catch (e) {
         // 忽略不存在的表情
       }
