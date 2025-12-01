@@ -1577,6 +1577,8 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                       </button>
                     </div>
                     
+                    {!useAdvancedAvatar && (
+                      <>
                     <p className="text-xs text-gray-300 mb-2 font-medium mt-3">形象位置：</p>
                     <div className="grid grid-cols-3 gap-3">
                       <button
@@ -1610,6 +1612,8 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                         ↗️ 右上角
                       </button>
                     </div>
+                      </>
+                    )}
                     
                     <div className="p-3 bg-[#FE2C55]/10 border border-[#FE2C55]/30 rounded-lg mt-3">
                       <p className="text-sm text-[#FE2C55]">
@@ -1634,6 +1638,9 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                         </p>
                         <p className="text-xs text-gray-300 mt-1">
                           ✨ 支持智能口型同步，仅适配女声配音
+                        </p>
+                        <p className="text-xs text-[#FFD700] mt-2 font-semibold">
+                          📍 默认显示位置：右上角
                         </p>
                       </div>
                     )}

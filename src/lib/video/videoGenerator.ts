@@ -85,8 +85,8 @@ export async function generateVideo(
         const { loadVRM, createVRMScene } = await import('@/lib/vrm/vrmLoader');
         const vrm = await loadVRM({
           modelPath: '/avatars/female/中国风可爱女娃娃.vrm',
-          position: { x: 0, y: -0.9, z: 0 }, // Y轴降低，显示完整身体
-          scale: 1.0, // 适当缩放
+          position: { x: 0, y: -0.5, z: 0 }, // Y轴轻微降低，显示完整身体
+          scale: 1.0,
         });
         
         if (vrm) {
@@ -173,8 +173,8 @@ export async function generateVideo(
       const isSpeaking = !!(enableVoice && finalCaptions[imageIndex]); // 判断是否在"说话"
       
       if (vrmData) {
-        // 高级模式：渲染 VRM 3D 形象
-        await drawVRMAvatar(ctx, canvas.width, canvas.height, vrmData, avatarPosition, currentTime, isSpeaking);
+        // 高级模式：VRM 3D 形象固定在右上角
+        await drawVRMAvatar(ctx, canvas.width, canvas.height, vrmData, 'top-right', currentTime, isSpeaking);
       } else if (avatarImage) {
         // 基础模式：绘制 2D Emoji 形象
         drawAvatar(ctx, canvas.width, canvas.height, avatarImage, avatarPosition, currentTime, isSpeaking);
