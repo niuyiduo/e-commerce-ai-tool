@@ -1447,7 +1447,13 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                     </div>
                     <div className="grid grid-cols-3 gap-3">
                       <button
-                        onClick={() => setVoiceType('male')}
+                        onClick={() => {
+                          setVoiceType('male');
+                          // 高级模式下自动匹配形象
+                          if (useAdvancedAvatar && enableAvatar) {
+                            setAvatarStyle('male');
+                          }
+                        }}
                         className={`px-4 py-3 rounded-lg border-2 transition-all ${
                           voiceType === 'male'
                             ? 'border-[#00D4FF] bg-[#00D4FF]/10 text-[#00D4FF] font-semibold'
@@ -1457,7 +1463,13 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                         👨 男声
                       </button>
                       <button
-                        onClick={() => setVoiceType('female')}
+                        onClick={() => {
+                          setVoiceType('female');
+                          // 高级模式下自动匹配形象
+                          if (useAdvancedAvatar && enableAvatar) {
+                            setAvatarStyle('female');
+                          }
+                        }}
                         className={`px-4 py-3 rounded-lg border-2 transition-all ${
                           voiceType === 'female'
                             ? 'border-[#FE2C55] bg-[#FE2C55]/10 text-[#FE2C55] font-semibold'
@@ -1474,6 +1486,13 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                           {voiceType === 'female' && '女声（通用）'}
                         </span> AI配音，将为字幕添加语音讲解
                       </p>
+                      {useAdvancedAvatar && enableAvatar && (
+                        <p className="text-xs text-[#FFD700] mt-2">
+                          🎭 自动匹配到 <span className="font-semibold">
+                            {voiceType === 'male' ? '男生' : '女生'} VRM 模型
+                          </span>
+                        </p>
+                      )}
                     </div>
                   </div>
                 ) : (
