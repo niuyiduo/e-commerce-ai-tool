@@ -384,6 +384,11 @@ async function drawVRMAvatar(
  // 3D 动画效果：让角色"活"起来
   const animationTime = currentTime * 2; // 动画时间
   
+  // 调试：每100帧输出一次状态
+  if (Math.floor(currentTime * 30) % 100 === 0) {
+    console.log(`[VRM动画] 时间:${currentTime.toFixed(2)}s, 说话状态:${isSpeaking}, 有表情系统:${!!vrm.expressionManager}, 有骨骼系统:${!!vrm.humanoid}`);
+  }
+  
   // 1. 呼吸动画（身体上下起伏）- 增大幅度
   const breathingOffset = Math.sin(animationTime * 1.5) * 0.02; // 增大到0.02（原0.008）
   vrm.scene.position.y += breathingOffset;
@@ -421,6 +426,7 @@ async function drawVRMAvatar(
   
   // 4. 眨眼效果（适配无表情系统的模型）
   // 如果有表情系统，使用表情；否则用缩放模拟
+  let blinkScaleEffect = 1.0; // 默认缩放
   if (vrm.expressionManager) {
     const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5;
     const shouldBlink = blinkCycle > 0.85;
@@ -436,14 +442,12 @@ async function drawVRMAvatar(
     const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5;
     const shouldBlink = blinkCycle > 0.85;
     if (shouldBlink) {
-      const blinkScale = 1 - (blinkCycle - 0.85) / 0.15 * 0.15; // 增大缩放幅度（原0.03→0.15）
-      vrm.scene.scale.setScalar(blinkScale);
-    } else {
-      vrm.scene.scale.setScalar(1.0);
+      blinkScaleEffect = 1 - (blinkCycle - 0.85) / 0.15 * 0.15; // 眨眼时缩小15%
     }
   }
   
   // 5. 口型同步（适配无表情系统的模型）
+  let talkScaleEffect = 1.0; // 默认缩放
   if (vrm.expressionManager) {
     // 有表情系统：使用1-2-3口型
     if (isSpeaking) {
@@ -494,9 +498,17 @@ async function drawVRMAvatar(
       // 增加左右摇头
       vrm.scene.rotation.y += Math.cos(animationTime * 10) * 0.1;
       // 增加缩放效果（模拟张嘴）
-      const scaleEffect = 1 + Math.abs(talkCycle) * 0.08;
-      vrm.scene.scale.setScalar(scaleEffect);
+      talkScaleEffect = 1 + Math.abs(talkCycle) * 0.08;
     }
+  }
+  
+  // 统一应用缩放效果（眨眼和说话取最大值）
+  const finalScale = Math.max(blinkScaleEffect, talkScaleEffect);
+  vrm.scene.scale.setScalar(finalScale);
+  
+  // 调试：显示缩放和位置变化
+  if (Math.floor(currentTime * 30) % 30 === 0) {
+    console.log(`[VRM细节] 缩放:${finalScale.toFixed(3)}, 眨眼:${blinkScaleEffect.toFixed(3)}, 说话:${talkScaleEffect.toFixed(3)}, 位置Z:${vrm.scene.position.z.toFixed(3)}`);
   }
   
   // 更新 VRM 模型（每帧更新）
