@@ -959,31 +959,34 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
+    <div className="min-h-screen bg-[#0a0a0a]">
+      {/* 顶部装饰条 */}
+      <div className="h-1 bg-gradient-to-r from-[#FE2C55] via-[#00D4FF] to-[#FE2C55]"></div>
+      
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-4xl font-bold text-center mb-8 text-indigo-900">
-          🎨 朵朵素材魔方
+        <h1 className="text-4xl font-bold text-center mb-8 bg-gradient-to-r from-[#FE2C55] to-[#00D4FF] bg-clip-text text-transparent">
+          ⚡ 抖音电商素材智造
         </h1>
 
         {/* 模式切换 */}
         <div className="flex justify-center mb-6">
-          <div className="bg-white rounded-lg shadow-md p-2 inline-flex gap-2">
+          <div className="bg-[#1a1a1a] border border-white/10 rounded-lg p-2 inline-flex gap-2">
             <button
               onClick={() => setMode('image')}
-              className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+              className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 ${
                 mode === 'image'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-[#FE2C55] to-[#FF6B95] text-white shadow-lg shadow-[#FE2C55]/50'
+                  : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
               🖼️ AI 图片生成
             </button>
             <button
               onClick={() => setMode('video')}
-              className={`px-6 py-2 rounded-lg font-semibold transition-colors ${
+              className={`px-6 py-2 rounded-lg font-semibold transition-all duration-300 ${
                 mode === 'video'
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  ? 'bg-gradient-to-r from-[#00D4FF] to-[#00A8E8] text-white shadow-lg shadow-[#00D4FF]/50'
+                  : 'bg-transparent text-gray-400 hover:text-white hover:bg-white/5'
               }`}
             >
               🎬 视频生成
@@ -996,8 +999,8 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* 左侧：图片上传区域 */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-xl shadow-lg p-6">
-                <h2 className="text-xl font-semibold mb-4 text-gray-800">📸 上传商品主图</h2>
+              <div className="bg-[#1a1a1a] border border-white/10 rounded-xl backdrop-blur-sm p-6 overflow-y-auto" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+                <h2 className="text-xl font-semibold mb-4 text-white">📸 上传商品主图</h2>
                 
                 {!productImage ? (
                   <div
@@ -1007,19 +1010,19 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                     onDrop={handleDrop}
                     className={`border-2 border-dashed rounded-lg transition-colors ${
                       isDragging 
-                        ? 'border-indigo-500 bg-indigo-100' 
-                        : 'border-indigo-300 bg-white hover:bg-indigo-50'
+                        ? 'border-[#FE2C55] bg-[#FE2C55]/10' 
+                        : 'border-white/20 bg-transparent hover:bg-white/5'
                     }`}
                   >
                     <label className="flex flex-col items-center justify-center w-full h-64 cursor-pointer">
                     <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <svg className="w-12 h-12 mb-3 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="w-12 h-12 mb-3 text-[#00D4FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                       </svg>
-                      <p className="mb-2 text-sm text-gray-500">
+                      <p className="mb-2 text-sm text-gray-300">
                         <span className="font-semibold">点击上传</span> 或拖拽图片
                       </p>
-                      <p className="text-xs text-gray-400">PNG, JPG (最大 10MB)</p>
+                      <p className="text-xs text-gray-500">PNG, JPG (最大 10MB)</p>
                     </div>
                     <input
                       type="file"
@@ -1048,14 +1051,14 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                 )}
 
                 {productImage && (
-                  <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                    <p className="text-sm text-green-800">✅ 图片上传成功！现在可以开始对话生成素材了。</p>
+                  <div className="mt-4 p-4 bg-gradient-to-r from-[#FE2C55]/10 to-[#00D4FF]/10 border border-[#FE2C55]/30 rounded-lg">
+                    <p className="text-sm text-gray-300">✅ 图片上传成功！现在可以开始对话生成素材了。</p>
                   </div>
                 )}
                 
                 {/* AI 模型选择 */}
                 <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-3 text-gray-800">🤖 AI 模型选择</h3>
+                  <h3 className="text-lg font-semibold mb-3 text-white">🤖 AI 模型选择</h3>
                   <div className="space-y-2">
                     {availableModels.map((model) => (
                       <div
@@ -1067,31 +1070,31 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                         }}
                         className={`p-3 rounded-lg cursor-pointer transition-all ${
                           selectedModel === model.id
-                            ? 'bg-indigo-100 border-2 border-indigo-500'
-                            : 'bg-gray-50 border-2 border-gray-200 hover:bg-gray-100'
+                            ? 'bg-gradient-to-r from-[#FE2C55] to-[#FF6B95] border-2 border-[#FE2C55]'
+                            : 'bg-white/5 border-2 border-white/10 hover:bg-white/10'
                         }`}
                       >
                         <div className="flex items-center justify-between">
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
-                              <span className="font-semibold text-gray-800">{model.name}</span>
+                              <span className="font-semibold text-white">{model.name}</span>
                               {selectedModel === model.id && (
-                                <svg className="w-5 h-5 text-indigo-600" fill="currentColor" viewBox="0 0 20 20">
+                                <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 20 20">
                                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                                 </svg>
                               )}
                             </div>
-                            <p className="text-xs text-gray-500 mt-1">{model.description}</p>
+                            <p className="text-xs text-gray-400 mt-1">{model.description}</p>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-xs text-blue-700">
+                  <div className="mt-3 p-3 bg-[#00D4FF]/10 border border-[#00D4FF]/30 rounded-lg">
+                    <p className="text-xs text-[#00D4FF]">
                       💡 <b>当前选择</b>：{availableModels.find(m => m.id === selectedModel)?.name}
                     </p>
-                    <p className="text-xs text-blue-600 mt-1">
+                    <p className="text-xs text-gray-400 mt-1">
                       不同模型适用于不同场景，pro 版本适合复杂任务，lite 版本响应更快
                     </p>
                   </div>
@@ -1101,14 +1104,14 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
 
           {/* 右侧：对话区域 */}
           <div className="lg:col-span-2">
-            <div className="bg-white rounded-xl shadow-lg p-6 flex flex-col h-[600px]">
-              <h2 className="text-xl font-semibold mb-4 text-gray-800">💬 AI 助手对话</h2>
+            <div className="bg-[#1a1a1a] border border-white/10 rounded-xl backdrop-blur-sm p-6 flex flex-col" style={{ maxHeight: 'calc(100vh - 200px)' }}>
+              <h2 className="text-xl font-semibold mb-4 text-white">💬 AI 助手对话</h2>
 
               {/* 消息列表 */}
-              <div className="flex-1 overflow-y-auto mb-4 space-y-4">
+              <div className="flex-1 overflow-y-auto mb-4 space-y-4" style={{ minHeight: '400px' }}>
                 {messages.length === 0 && (
                   <div className="text-center py-12">
-                    <p className="text-gray-600 mb-4 font-medium">暂无对话,上传图片后开始聊天</p>
+                    <p className="text-gray-400 mb-4 font-medium">暂无对话,上传图片后开始聊天</p>
                     <div className="grid grid-cols-2 gap-3 max-w-md mx-auto">
                       {['生成商品标题', '生成商品卖点', '生成装饰宣传图'].map((text) => (
                         <button
@@ -1120,7 +1123,7 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                             }
                           }}
                           disabled={!productImage}
-                          className="px-4 py-2 bg-indigo-100 text-indigo-800 font-medium rounded-lg hover:bg-indigo-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-4 py-2 bg-gradient-to-r from-[#FE2C55] to-[#FF6B95] text-white font-medium rounded-lg hover:shadow-lg hover:shadow-[#FE2C55]/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {text}
                         </button>
@@ -1225,21 +1228,21 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                 </button>
               </div>
 
-              {/* 🔥 新增：普通Vision模型的不满意反馈区域 */}
+              {/* 🔥 新增：普通Vision模型的不满意反馈区域 - 移到对话框下方 */}
               {generatedImage && selectedModel !== 'Doubao-1.5-vision-thinking-pro' && stepOneImage && !isLoading && (
-                <div className="mt-4 p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                  <p className="text-sm text-gray-700 mb-3 font-medium">💬 对结果不满意？请告诉我需要调整的地方：</p>
+                <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+                  <p className="text-xs text-gray-700 mb-2 font-medium">💬 对结果不满意？请告诉我需要调整的地方：</p>
                   <textarea
                     value={userFeedback}
                     onChange={(e) => setUserFeedback(e.target.value)}
                     placeholder="例如：商品名称不准确、卖点需要更突出、颜色太淡等..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-sm text-gray-800 placeholder:text-gray-400"
-                    rows={3}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-xs text-gray-800 placeholder:text-gray-400"
+                    rows={2}
                   />
                   <button
                     onClick={handleDissatisfaction}
                     disabled={!userFeedback.trim()}
-                    className="mt-3 w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                    className="mt-2 w-full px-3 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
                   >
                     🔄 重新生成 {dissatisfactionCount > 0 && `(${dissatisfactionCount}/3)`}
                   </button>

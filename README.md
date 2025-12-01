@@ -297,6 +297,248 @@ e-commerce-ai-tool/
 └── tsconfig.json                 # TypeScript 配置
 ```
 
+## 📅 开发排期
+
+### 项目时间线
+
+| 阶段 | 时间 | 主要任务 | 产出 |
+|------|------|---------|------|
+| **Week 1** | 第1周 | 需求分析与技术选型 | 技术方案文档 |
+| | | - 分析电商素材生成需求 | |
+| | | - 选定 Next.js + TypeScript 技术栈 | |
+| | | - 确定火山引擎 AI 服务 | |
+| **Week 2** | 第2周 | 项目初始化与基础搭建 | 项目框架 |
+| | | - 初始化 Next.js 项目 | |
+| | | - 配置 Tailwind CSS | |
+| | | - 搭建基础 UI 框架 | |
+| | | - 实现图片上传功能（点击+拖拽） | |
+| **Week 3** | 第3周 | AI 对话功能开发 | AI 对话模块 |
+| | | - 集成火山引擎 API | |
+| | | - 实现 /api/chat 路由 | |
+| | | - 开发对话界面 | |
+| | | - 实现商品文案生成 | |
+| **Week 4** | 第4周 | 图片装饰功能开发 | 图片处理模块 |
+| | | - 开发 Canvas 图片处理 | |
+| | | - 实现普通装饰模式（徽章+贴纸） | |
+| | | - 添加水印功能 | |
+| | | - 实现图片下载 | |
+| **Week 5** | 第5周 | 视频生成功能开发 | 视频生成模块 |
+| | | - 实现多图上传管理 | |
+| | | - 开发 MediaRecorder 视频录制 | |
+| | | - 实现转场效果 | |
+| | | - 添加字幕功能 | |
+| **Week 6** | 第6周 | 语音配音功能开发 | TTS 语音模块 |
+| | | - 集成火山引擎 TTS API | |
+| | | - 实现 /api/tts 路由 | |
+| | | - 开发音视频同步逻辑 | |
+| | | - 实现 Web Audio API 混音 | |
+| **Week 7** | 第7周 | 多模型切换与高级功能 | 高级功能模块 |
+| | | - 实现 6 个 AI 模型切换 | |
+| | | - 开发高级定制装饰图（Vision） | |
+| | | - 实现智能反馈优化机制 | |
+| | | - 添加边框风格选择 | |
+| **Week 8** | 第8周 | 部署上线与优化 | 生产环境 |
+| | | - GitHub 仓库配置 | |
+| | | - Vercel 部署配置 | |
+| | | - CI/CD 流程搭建 | |
+| | | - 性能优化与文档编写 | |
+
+### 关键里程碑
+
+- ✅ **Week 3 结束**：完成基础 AI 对话功能
+- ✅ **Week 5 结束**：完成图片和视频生成核心功能
+- ✅ **Week 7 结束**：完成所有高级功能
+- ✅ **Week 8 结束**：项目上线并投入使用
+
+---
+
+## 📡 API 接口文档
+
+### 接口概览
+
+本项目提供 2 个主要 API 接口，均基于 Next.js App Router 实现。
+
+---
+
+### 1. AI 对话接口
+
+**接口地址**：`POST /api/chat`
+
+**功能描述**：接收用户消息和商品图片，调用火山引擎 AI 模型生成回复内容。
+
+**请求头**：
+```http
+Content-Type: application/json
+```
+
+**请求体**：
+```typescript
+{
+  messages: Array<{
+    role: 'user' | 'assistant',
+    content: string
+  }>,
+  image?: string,              // Base64 格式图片（可选）
+  model?: string,              // AI 模型名称（可选）
+  feedback?: string,           // 用户反馈（可选）
+  previousAnalysis?: string,   // 上次分析结果（可选）
+  borderStyle?: string         // 边框样式（可选）
+}
+```
+
+**请求示例**：
+```json
+{
+  "messages": [
+    {
+      "role": "user",
+      "content": "生成商品标题"
+    }
+  ],
+  "image": "data:image/jpeg;base64,/9j/4AAQSkZJRg...",
+  "model": "Doubao-1.5-pro-32k"
+}
+```
+
+**响应体**：
+```typescript
+{
+  content: string              // AI 生成的回复内容
+}
+```
+
+**响应示例**：
+```json
+{
+  "content": "【限时特惠】高端商务笔记本电脑 - 轻薄便携 超长续航"
+}
+```
+
+**状态码**：
+- `200` - 请求成功
+- `400` - 请求参数错误
+- `500` - 服务器内部错误
+
+**错误响应示例**：
+```json
+{
+  "error": "Missing required messages"
+}
+```
+
+**支持的模型列表**：
+- `Doubao-1.5-pro-32k` - 高性能长文本模型
+- `Doubao-1.5-pro-4k` - 标准快速响应模型
+- `Doubao-lite-32k` - 轻量经济模型
+- `Doubao-lite-4k` - 基础快速模型
+- `Doubao-vision` - 多模态图文理解模型
+- `Doubao-thinking-vision` - 思维链深度推理模型
+
+**注意事项**：
+1. `image` 字段为 Base64 编码的图片数据
+2. Vision 模型需要提供 `image` 参数
+3. 高级定制模式需使用 Vision 或 Thinking-Vision 模型
+4. `feedback` 和 `previousAnalysis` 用于智能反馈优化
+
+---
+
+### 2. 语音合成接口
+
+**接口地址**：`POST /api/tts`
+
+**功能描述**：将文本转换为语音，调用火山引擎 TTS 服务生成音频。
+
+**请求头**：
+```http
+Content-Type: application/json
+```
+
+**请求体**：
+```typescript
+{
+  text: string,                // 要合成的文本内容
+  voice?: string               // 音色选择（可选，默认：BV001_streaming）
+}
+```
+
+**请求示例**：
+```json
+{
+  "text": "欢迎来到我们的店铺，这款产品性价比超高！",
+  "voice": "BV002_streaming"
+}
+```
+
+**响应**：
+- **Content-Type**: `audio/mpeg`
+- **Body**: 音频流（二进制数据）
+
+**支持的音色**：
+- `BV001_streaming` - 通用女声（默认）
+- `BV002_streaming` - 通用男声
+
+**状态码**：
+- `200` - 请求成功，返回音频流
+- `400` - 请求参数错误
+- `500` - 服务器内部错误
+
+**错误响应示例**：
+```json
+{
+  "error": "Missing required text"
+}
+```
+
+**使用示例**：
+```typescript
+const response = await fetch('/api/tts', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    text: '这是一段测试文本',
+    voice: 'BV002_streaming'
+  })
+});
+
+const audioBlob = await response.blob();
+const audioUrl = URL.createObjectURL(audioBlob);
+const audio = new Audio(audioUrl);
+audio.play();
+```
+
+**注意事项**：
+1. 文本长度建议不超过 500 字符
+2. 返回的音频格式为 MP3
+3. 音频采样率：24000Hz
+4. 音频比特率：48kbps
+5. 支持中文、英文混合文本
+
+---
+
+### 环境变量配置
+
+API 接口依赖以下环境变量（需在 `.env.local` 中配置）：
+
+```env
+# AI 服务配置
+VOLCENGINE_API_KEY=你的火山引擎API密钥
+VOLCENGINE_ENDPOINT_ID=默认端点ID
+
+# 多模型端点（可选）
+VOLCENGINE_ENDPOINT_PRO_32K=Pro32K端点ID
+VOLCENGINE_ENDPOINT_PRO_4K=Pro4K端点ID
+VOLCENGINE_ENDPOINT_LITE_32K=Lite32K端点ID
+VOLCENGINE_ENDPOINT_LITE_4K=Lite4K端点ID
+VOLCENGINE_ENDPOINT_VISION=Vision端点ID
+VOLCENGINE_ENDPOINT_THINKING_VISION=ThinkingVision端点ID
+
+# TTS 服务配置
+VOLCENGINE_TTS_APP_ID=TTS应用ID
+VOLCENGINE_TTS_TOKEN=TTS访问令牌
+```
+
+---
+
 ## 🔧 开发指南
 
 ### 核心文件说明
