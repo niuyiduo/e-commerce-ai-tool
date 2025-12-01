@@ -1217,12 +1217,12 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                   }}
                   placeholder={productImage ? '输入您的需求,或点击上方快捷按钮' : '请先上传商品图片'}
                   disabled={!productImage || isLoading}
-                  className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:bg-gray-100 disabled:cursor-not-allowed text-gray-800 placeholder:text-gray-500"
+                  className="flex-1 px-4 py-3 border border-white/20 bg-white/5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE2C55] disabled:opacity-50 disabled:cursor-not-allowed text-white placeholder:text-gray-500"
                 ></textarea>
                                 <button
                   onClick={handleSendMessage}
                   disabled={!productImage || !inputValue.trim() || isLoading}
-                  className="px-6 py-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                  className="px-6 py-3 bg-gradient-to-r from-[#FE2C55] to-[#FF6B95] text-white rounded-lg hover:shadow-lg hover:shadow-[#FE2C55]/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
                 >
                   发送
                 </button>
@@ -1230,19 +1230,19 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
 
               {/* 🔥 新增：普通Vision模型的不满意反馈区域 - 移到对话框下方 */}
               {generatedImage && selectedModel !== 'Doubao-1.5-vision-thinking-pro' && stepOneImage && !isLoading && (
-                <div className="mt-3 p-3 bg-orange-50 border border-orange-200 rounded-lg">
-                  <p className="text-xs text-gray-700 mb-2 font-medium">💬 对结果不满意？请告诉我需要调整的地方：</p>
+                <div className="mt-3 p-3 bg-[#FF6B00]/10 border border-[#FF6B00]/30 rounded-lg">
+                  <p className="text-xs text-gray-300 mb-2 font-medium">💬 对结果不满意？请告诉我需要调整的地方：</p>
                   <textarea
                     value={userFeedback}
                     onChange={(e) => setUserFeedback(e.target.value)}
                     placeholder="例如：商品名称不准确、卖点需要更突出、颜色太淡等..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-orange-500 text-xs text-gray-800 placeholder:text-gray-400"
+                    className="w-full px-3 py-2 border border-white/20 bg-white/5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FF6B00] text-xs text-white placeholder:text-gray-500"
                     rows={2}
                   />
                   <button
                     onClick={handleDissatisfaction}
                     disabled={!userFeedback.trim()}
-                    className="mt-2 w-full px-3 py-1.5 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
+                    className="mt-2 w-full px-3 py-1.5 bg-[#FF6B00] text-white rounded-lg hover:bg-[#FF8C00] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
                   >
                     🔄 重新生成 {dissatisfactionCount > 0 && `(${dissatisfactionCount}/3)`}
                   </button>
@@ -1256,12 +1256,12 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
         {/* 视频生成模式 */}
         {mode === 'video' && (
           <div className="max-w-5xl mx-auto">
-            <div className="bg-white rounded-xl shadow-lg p-6">
-              <h2 className="text-2xl font-semibold mb-6 text-gray-800">🎬 视频生成工作台</h2>
+            <div className="bg-[#1a1a1a] border border-white/10 rounded-xl backdrop-blur-sm p-6">
+              <h2 className="text-2xl font-semibold mb-6 text-white">🎬 视频生成工作台</h2>
 
               {/* 图片上传区 */}
               <div className="mb-6">
-                <h3 className="text-lg font-semibold mb-3 text-gray-700">📸 上传图片（最多 5 张）</h3>
+                <h3 className="text-lg font-semibold mb-3 text-white">📸 上传图片（最多 5 张）</h3>
                 <div
                   onDragOver={handleMultipleImagesDragOver}
                   onDragEnter={handleMultipleImagesDragEnter}
@@ -1269,19 +1269,19 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                   onDrop={handleMultipleImagesDrop}
                   className={`border-2 border-dashed rounded-lg transition-colors ${
                     isMultipleDragging 
-                      ? 'border-indigo-500 bg-indigo-100' 
-                      : 'border-indigo-300 bg-white hover:bg-indigo-50'
+                      ? 'border-[#00D4FF] bg-[#00D4FF]/10' 
+                      : 'border-white/20 bg-transparent hover:bg-white/5'
                   }`}
                 >
                   <label className="flex flex-col items-center justify-center w-full h-40 cursor-pointer">
                   <div className="flex flex-col items-center justify-center">
-                    <svg className="w-10 h-10 mb-2 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="w-10 h-10 mb-2 text-[#00D4FF]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
                     </svg>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-300">
                       <span className="font-semibold">点击上传多张图片</span> 或拖拽
                     </p>
-                    <p className="text-xs text-gray-400 mt-1">已上传 {uploadedImages.length} / 5</p>
+                    <p className="text-xs text-gray-500 mt-1">已上传 {uploadedImages.length} / 5</p>
                   </div>
                   <input
                     type="file"
@@ -1301,9 +1301,9 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                         <img
                           src={img}
                           alt={`图片 ${index + 1}`}
-                          className="w-full h-32 object-cover rounded-lg border-2 border-indigo-200"
+                          className="w-full h-32 object-cover rounded-lg border-2 border-[#00D4FF]/30"
                         />
-                        <div className="absolute top-1 right-1 bg-indigo-600 text-white text-xs px-2 py-1 rounded">
+                        <div className="absolute top-1 right-1 bg-gradient-to-r from-[#FE2C55] to-[#FF6B95] text-white text-xs px-2 py-1 rounded">
                           {index + 1}
                         </div>
                         <button
@@ -1334,7 +1334,7 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                     onChange={(e) => setVideoDuration(Number(e.target.value))}
                     className="w-full"
                   />
-                  <div className="text-center text-lg font-semibold text-indigo-600 mt-1">
+                  <div className="text-center text-lg font-semibold text-[#FE2C55] mt-1">
                     {videoDuration} 秒
                   </div>
                 </div>
@@ -1346,7 +1346,7 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                   <select
                     value={videoTransition}
                     onChange={(e) => setVideoTransition(e.target.value as 'fade' | 'slide' | 'none')}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-800 font-medium"
+                    className="w-full px-4 py-2 border border-white/20 bg-white/5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00D4FF] text-white font-medium"
                   >
                     <option value="fade">淡入淡出</option>
                     <option value="slide">滑动</option>
@@ -1358,15 +1358,15 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
               {/* 讲解字幕设置 */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-white">
                     💬 讲解字幕（可选）
                   </label>
                   <button
                     onClick={() => setUseCustomCaptions(!useCustomCaptions)}
                     className={`px-3 py-1 text-sm rounded-lg transition-colors ${
                       useCustomCaptions 
-                        ? 'bg-indigo-600 text-white' 
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        ? 'bg-gradient-to-r from-[#FE2C55] to-[#FF6B95] text-white' 
+                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
                     }`}
                   >
                     {useCustomCaptions ? '自定义字幕' : '自动生成'}
@@ -1376,14 +1376,14 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                 {useCustomCaptions ? (
                   <div className="space-y-2">
                     {uploadedImages.length === 0 ? (
-                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                        <p className="text-sm text-yellow-700">
+                      <div className="p-3 bg-[#FF6B00]/10 border border-[#FF6B00]/30 rounded-lg">
+                        <p className="text-sm text-gray-300">
                           ⚠️ 请先上传图片后再输入字幕内容
                         </p>
                       </div>
                     ) : (
                       <>
-                        <p className="text-xs text-gray-600 mb-2 font-medium">为每张图片输入讲解文案（每行一张）</p>
+                        <p className="text-xs text-gray-300 mb-2 font-medium">为每张图片输入讲解文案（每行一张）</p>
                         {Array.from({ length: uploadedImages.length }).map((_, index) => (
                           <input
                             key={index}
@@ -1395,15 +1395,15 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                               newCaptions[index] = e.target.value;
                               setVideoCaptions(newCaptions);
                             }}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-gray-800 placeholder:text-gray-500"
+                            className="w-full px-3 py-2 border border-white/20 bg-white/5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#00D4FF] text-white placeholder:text-gray-500"
                           />
                         ))}
                       </>
                     )}
                   </div>
                 ) : (
-                  <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                    <p className="text-sm text-blue-700">
+                  <div className="p-3 bg-[#00D4FF]/10 border border-[#00D4FF]/30 rounded-lg">
+                    <p className="text-sm text-[#00D4FF]">
                       ✨ 将自动生成默认讲解字幕，如“欢迎了解我们的产品”、“产品特点展示”等
                     </p>
                   </div>
@@ -1413,15 +1413,15 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
               {/* 配音设置 */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-3">
-                  <label className="block text-sm font-medium text-gray-700">
+                  <label className="block text-sm font-medium text-white">
                     🎤 语音配音（可选）
                   </label>
                   <button
                     onClick={() => setEnableVoice(!enableVoice)}
                     className={`px-3 py-1 text-sm rounded-lg transition-colors ${
                       enableVoice 
-                        ? 'bg-green-600 text-white' 
-                        : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                        ? 'bg-gradient-to-r from-[#00D4FF] to-[#00A8E8] text-white' 
+                        : 'bg-white/10 text-gray-300 hover:bg-white/20'
                     }`}
                   >
                     {enableVoice ? '✅ 已启用' : '关闭'}
@@ -1430,9 +1430,9 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                 
                 {enableVoice ? (
                   <div className="space-y-3">
-                    <p className="text-xs text-gray-600 mb-2 font-medium">选择配音音色（使用火山引擎 TTS）</p>
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg mb-3">
-                      <p className="text-xs text-green-700">
+                    <p className="text-xs text-gray-300 mb-2 font-medium">选择配音音色（使用火山引擎 TTS）</p>
+                    <div className="p-3 bg-[#00D4FF]/10 border border-[#00D4FF]/30 rounded-lg mb-3">
+                      <p className="text-xs text-[#00D4FF]">
                         ✨ <strong>使用火山引擎语音合成</strong>：配音将<strong>直接录制到视频中</strong>，音色选择有效，生成的视频文件自带音频！
                       </p>
                     </div>
@@ -1441,8 +1441,8 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                         onClick={() => setVoiceType('male')}
                         className={`px-4 py-3 rounded-lg border-2 transition-all ${
                           voiceType === 'male'
-                            ? 'border-blue-500 bg-blue-50 text-blue-700 font-semibold'
-                            : 'border-gray-300 hover:border-blue-300 text-gray-700'
+                            ? 'border-[#00D4FF] bg-[#00D4FF]/10 text-[#00D4FF] font-semibold'
+                            : 'border-white/20 hover:border-[#00D4FF]/50 text-gray-300'
                         }`}
                       >
                         👨 男声
@@ -1451,15 +1451,15 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                         onClick={() => setVoiceType('female')}
                         className={`px-4 py-3 rounded-lg border-2 transition-all ${
                           voiceType === 'female'
-                            ? 'border-pink-500 bg-pink-50 text-pink-700 font-semibold'
-                            : 'border-gray-300 hover:border-pink-300 text-gray-700'
+                            ? 'border-[#FE2C55] bg-[#FE2C55]/10 text-[#FE2C55] font-semibold'
+                            : 'border-white/20 hover:border-[#FE2C55]/50 text-gray-300'
                         }`}
                       >
                         👩 女声
                       </button>
                     </div>
-                    <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
-                      <p className="text-sm text-green-700">
+                    <div className="p-3 bg-[#00D4FF]/10 border border-[#00D4FF]/30 rounded-lg">
+                      <p className="text-sm text-[#00D4FF]">
                         ✨ 已启用 <span className="font-semibold">
                           {voiceType === 'male' && '男声（通用）'}
                           {voiceType === 'female' && '女声（通用）'}
@@ -1468,8 +1468,8 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                     </div>
                   </div>
                 ) : (
-                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg">
-                    <p className="text-sm text-gray-600">
+                  <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
+                    <p className="text-sm text-gray-400">
                       🔇 当前未启用配音，视频将仅显示字幕无声音
                     </p>
                   </div>
@@ -1480,7 +1480,7 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
               <button
                 onClick={handleGenerateVideo}
                 disabled={uploadedImages.length === 0 || isGeneratingVideo}
-                className="w-full py-4 bg-indigo-600 text-white text-lg font-semibold rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed mb-6"
+                className="w-full py-4 bg-gradient-to-r from-[#00D4FF] to-[#00A8E8] text-white text-lg font-semibold rounded-lg hover:shadow-lg hover:shadow-[#00D4FF]/50 transition-all disabled:opacity-50 disabled:cursor-not-allowed mb-6"
               >
                 {isGeneratingVideo ? '🔄 正在生成视频...' : '🎬 生成视频'}
               </button>
@@ -1488,15 +1488,15 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
               {/* 视频预览 */}
               {generatedVideoUrl && (
                 <div className="mt-6">
-                  <h3 className="text-lg font-semibold mb-3 text-gray-700">✅ 视频预览</h3>
+                  <h3 className="text-lg font-semibold mb-3 text-white">✅ 视频预览</h3>
                   <video
                     src={generatedVideoUrl}
                     controls
-                    className="w-full rounded-lg border-2 border-indigo-200"
+                    className="w-full rounded-lg border-2 border-[#00D4FF]/30"
                   />
                   <button
                     onClick={handleDownloadVideo}
-                    className="mt-4 w-full py-3 bg-green-600 text-white font-semibold rounded-lg hover:bg-green-700 transition-colors"
+                    className="mt-4 w-full py-3 bg-gradient-to-r from-[#00D4FF] to-[#00A8E8] text-white font-semibold rounded-lg hover:shadow-lg hover:shadow-[#00D4FF]/50 transition-all"
                   >
                     📥 下载视频
                   </button>
@@ -1509,27 +1509,27 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
 
       {/* 装饰模式选择对话框 */}
       {showDecorativeDialog && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
-            <h3 className="text-2xl font-bold mb-4 text-gray-800">🎨 选择装饰模式</h3>
-            <p className="text-gray-600 mb-6">请选择您想要的图片装饰模式</p>
+        <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50">
+          <div className="bg-[#1a1a1a] border border-white/20 rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <h3 className="text-2xl font-bold mb-4 text-white">🎨 选择装饰模式</h3>
+            <p className="text-gray-400 mb-6">请选择您想要的图片装饰模式</p>
 
             {/* 两种模式选择 */}
             <div className="space-y-4 mb-6">
               {/* 普通装饰 */}
               <div
                 onClick={handleNormalDecorative}
-                className="border-2 border-gray-300 rounded-lg p-6 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all"
+                className="border-2 border-white/20 rounded-lg p-6 cursor-pointer hover:border-[#00D4FF] hover:bg-[#00D4FF]/10 transition-all"
               >
                 <div className="flex items-start gap-4">
                   <div className="text-4xl">🎨</div>
                   <div className="flex-1">
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">普通装饰</h4>
-                    <p className="text-sm text-gray-600">快速添加促销徽章、贴纸、价格标签等常规装饰元素</p>
+                    <h4 className="text-lg font-bold text-white mb-2">普通装饰</h4>
+                    <p className="text-sm text-gray-400">快速添加促销徽章、贴纸、价格标签等常规装饰元素</p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded">快速生成</span>
-                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">100+贴纸</span>
-                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">促销风格</span>
+                      <span className="text-xs bg-[#00D4FF]/20 text-[#00D4FF] px-2 py-1 rounded">快速生成</span>
+                      <span className="text-xs bg-[#00D4FF]/20 text-[#00D4FF] px-2 py-1 rounded">100+贴纸</span>
+                      <span className="text-xs bg-[#FE2C55]/20 text-[#FE2C55] px-2 py-1 rounded">促销风格</span>
                     </div>
                   </div>
                 </div>
@@ -1538,17 +1538,17 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
               {/* 高级定制 */}
               <div
                 onClick={handleAdvancedDecorative}
-                className="border-2 border-gray-300 rounded-lg p-6 cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-all"
+                className="border-2 border-white/20 rounded-lg p-6 cursor-pointer hover:border-[#FE2C55] hover:bg-[#FE2C55]/10 transition-all"
               >
                 <div className="flex items-start gap-4">
                   <div className="text-4xl">✨</div>
                   <div className="flex-1">
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">高级定制 <span className="text-xs bg-gradient-to-r from-purple-600 to-pink-600 text-white px-2 py-1 rounded ml-2">AI驱动</span></h4>
-                    <p className="text-sm text-gray-600">AI智能分析商品信息，生成带文字说明的装饰图，可选边框风格</p>
+                    <h4 className="text-lg font-bold text-white mb-2">高级定制 <span className="text-xs bg-gradient-to-r from-[#FE2C55] to-[#FF6B95] text-white px-2 py-1 rounded ml-2">AI驱动</span></h4>
+                    <p className="text-sm text-gray-400">AI智能分析商品信息，生成带文字说明的装饰图，可选边框风格</p>
                     <div className="mt-2 flex flex-wrap gap-2">
-                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded">AI提取信息</span>
-                      <span className="text-xs bg-pink-100 text-pink-700 px-2 py-1 rounded">文字装饰</span>
-                      <span className="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded">边框选择</span>
+                      <span className="text-xs bg-[#FE2C55]/20 text-[#FE2C55] px-2 py-1 rounded">AI提取信息</span>
+                      <span className="text-xs bg-[#FF6B00]/20 text-[#FF6B00] px-2 py-1 rounded">文字装饰</span>
+                      <span className="text-xs bg-[#00D4FF]/20 text-[#00D4FF] px-2 py-1 rounded">边框选择</span>
                     </div>
                   </div>
                 </div>
@@ -1558,7 +1558,7 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
             {/* 取消按钮 */}
             <button
               onClick={() => setShowDecorativeDialog(false)}
-              className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+              className="w-full px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition-colors"
             >
               取消
             </button>
@@ -1569,24 +1569,24 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
       {/* 边框选择对话框 */}
       {showBorderDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
-            <h3 className="text-2xl font-bold mb-4 text-gray-800">🖌️ 选择边框风格</h3>
-            <p className="text-gray-600 mb-6">请选择您想要的边框风格</p>
+          <div className="bg-[#1a1a1a] border border-white/20 rounded-xl shadow-2xl p-8 max-w-md w-full mx-4">
+            <h3 className="text-2xl font-bold mb-4 text-white">🖌️ 选择边框风格</h3>
+            <p className="text-gray-400 mb-6">请选择您想要的边框风格</p>
 
             {/* 三种边框选择 */}
             <div className="space-y-4 mb-6">
               {/* 简约边框 */}
               <div
                 onClick={() => setSelectedBorderStyle('simple')}
-                className={`border-2 rounded-lg p-6 cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all ${
-                  selectedBorderStyle === 'simple' ? 'border-blue-500 bg-blue-50' : ''
+                className={`border-2 rounded-lg p-6 cursor-pointer hover:border-[#00D4FF] hover:bg-[#00D4FF]/10 transition-all ${
+                  selectedBorderStyle === 'simple' ? 'border-[#00D4FF] bg-[#00D4FF]/10' : 'border-white/20'
                 }`}
               >
                 <div className="flex items-start gap-4">
                   <div className="text-4xl">🔲</div>
                   <div className="flex-1">
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">简约边框</h4>
-                    <p className="text-sm text-gray-600">简洁大方的四角边框</p>
+                    <h4 className="text-lg font-bold text-white mb-2">简约边框</h4>
+                    <p className="text-sm text-gray-400">简洁大方的四角边框</p>
                   </div>
                 </div>
               </div>
@@ -1594,15 +1594,15 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
               {/* 国潮边框 */}
               <div
                 onClick={() => setSelectedBorderStyle('guochao')}
-                className={`border-2 rounded-lg p-6 cursor-pointer hover:border-purple-500 hover:bg-purple-50 transition-all ${
-                  selectedBorderStyle === 'guochao' ? 'border-purple-500 bg-purple-50' : ''
+                className={`border-2 rounded-lg p-6 cursor-pointer hover:border-[#FE2C55] hover:bg-[#FE2C55]/10 transition-all ${
+                  selectedBorderStyle === 'guochao' ? 'border-[#FE2C55] bg-[#FE2C55]/10' : 'border-white/20'
                 }`}
               >
                 <div className="flex items-start gap-4">
                   <div className="text-4xl">🏮</div>
                   <div className="flex-1">
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">国潮边框</h4>
-                    <p className="text-sm text-gray-600">充满中国风的边框装饰</p>
+                    <h4 className="text-lg font-bold text-white mb-2">国潮边框</h4>
+                    <p className="text-sm text-gray-400">充满中国风的边框装饰</p>
                   </div>
                 </div>
               </div>
@@ -1610,15 +1610,15 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
               {/* 渐变边框 */}
               <div
                 onClick={() => setSelectedBorderStyle('gradient')}
-                className={`border-2 rounded-lg p-6 cursor-pointer hover:border-pink-500 hover:bg-pink-50 transition-all ${
-                  selectedBorderStyle === 'gradient' ? 'border-pink-500 bg-pink-50' : ''
+                className={`border-2 rounded-lg p-6 cursor-pointer hover:border-[#FF6B00] hover:bg-[#FF6B00]/10 transition-all ${
+                  selectedBorderStyle === 'gradient' ? 'border-[#FF6B00] bg-[#FF6B00]/10' : 'border-white/20'
                 }`}
               >
                 <div className="flex items-start gap-4">
                   <div className="text-4xl">🌈</div>
                   <div className="flex-1">
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">渐变边框</h4>
-                    <p className="text-sm text-gray-600">绚丽多彩的渐变效果</p>
+                    <h4 className="text-lg font-bold text-white mb-2">渐变边框</h4>
+                    <p className="text-sm text-gray-400">绚丽多彩的渐变效果</p>
                   </div>
                 </div>
               </div>
@@ -1626,15 +1626,15 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
               {/* 豪华边框 */}
               <div
                 onClick={() => setSelectedBorderStyle('luxury')}
-                className={`border-2 rounded-lg p-6 cursor-pointer hover:border-yellow-500 hover:bg-yellow-50 transition-all ${
-                  selectedBorderStyle === 'luxury' ? 'border-yellow-500 bg-yellow-50' : ''
+                className={`border-2 rounded-lg p-6 cursor-pointer hover:border-[#FFD700] hover:bg-[#FFD700]/10 transition-all ${
+                  selectedBorderStyle === 'luxury' ? 'border-[#FFD700] bg-[#FFD700]/10' : 'border-white/20'
                 }`}
               >
                 <div className="flex items-start gap-4">
                   <div className="text-4xl">💎</div>
                   <div className="flex-1">
-                    <h4 className="text-lg font-bold text-gray-800 mb-2">豪华边框</h4>
-                    <p className="text-sm text-gray-600">奢华精致的边框装饰</p>
+                    <h4 className="text-lg font-bold text-white mb-2">豪华边框</h4>
+                    <p className="text-sm text-gray-400">奢华精致的边框装饰</p>
                   </div>
                 </div>
               </div>
@@ -1644,32 +1644,32 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
             <div className="flex gap-3 mb-4">
               <button
                 onClick={handleSkipBorder}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors"
+                className="flex-1 px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition-colors"
               >
                 不需要，直接完成
               </button>
               <button
                 onClick={handleAddBorder}
-                className="flex-1 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+                className="flex-1 px-4 py-2 bg-gradient-to-r from-[#FE2C55] to-[#FF6B95] text-white rounded-lg hover:shadow-lg hover:shadow-[#FE2C55]/50 transition-all"
               >
                 ✅ 添加边框
               </button>
             </div>
 
             {/* 不满意反馈区域 */}
-            <div className="pt-4 border-t border-gray-200">
-              <p className="text-sm text-gray-600 mb-3">💬 对结果不满意？请告诉我需要调整的地方：</p>
+            <div className="pt-4 border-t border-white/20">
+              <p className="text-sm text-gray-300 mb-3">💬 对结果不满意？请告诉我需要调整的地方：</p>
               <textarea
                 value={userFeedback}
                 onChange={(e) => setUserFeedback(e.target.value)}
                 placeholder="例如：商品名称不准确、卖点需要更突出、颜色太淡等..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm text-gray-800 placeholder:text-gray-400"
+                className="w-full px-3 py-2 border border-white/20 bg-white/5 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FE2C55] text-sm text-white placeholder:text-gray-500"
                 rows={3}
               />
               <button
                 onClick={handleDissatisfaction}
                 disabled={!userFeedback.trim()}
-                className="mt-3 w-full px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
+                className="mt-3 w-full px-4 py-2 bg-[#FF6B00] text-white rounded-lg hover:bg-[#FF8C00] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
               >
                 🔄 重新生成 {selectedModel !== 'Doubao-1.5-vision-thinking-pro' && dissatisfactionCount > 0 && `(${dissatisfactionCount}/3)`}
               </button>
@@ -1680,16 +1680,16 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
 
       {/* 升级模型提示对话框 */}
       {showUpgradeDialog && (
-        <div className="fixed bottom-6 right-6 bg-white rounded-xl shadow-2xl p-6 max-w-md z-50 border-2 border-purple-500 animate-bounce">
+        <div className="fixed bottom-6 right-6 bg-[#1a1a1a] border-2 border-[#FE2C55] rounded-xl shadow-2xl p-6 max-w-md z-50 animate-bounce">
           <div className="flex items-start gap-4">
             <div className="text-4xl">🧠</div>
             <div className="flex-1">
-              <h4 className="text-lg font-bold text-gray-800 mb-2">升级到更强大的AI模型？</h4>
-              <p className="text-sm text-gray-600 mb-4">
-                当前使用 <span className="font-semibold text-indigo-600">{selectedModel === 'Doubao-1.5-vision-pro' ? 'Doubao-vision' : selectedModel}</span> 模型。<br/>
-                升级到 <span className="font-semibold text-purple-600">Doubao-thinking-vision</span> 思维链模型，可以：
+              <h4 className="text-lg font-bold text-white mb-2">升级到更强大的AI模型？</h4>
+              <p className="text-sm text-gray-300 mb-4">
+                当前使用 <span className="font-semibold text-[#00D4FF]">{selectedModel === 'Doubao-1.5-vision-pro' ? 'Doubao-vision' : selectedModel}</span> 模型。<br/>
+                升级到 <span className="font-semibold text-[#FE2C55]">Doubao-thinking-vision</span> 思维链模型，可以：
               </p>
-              <ul className="text-sm text-gray-700 mb-4 space-y-1">
+              <ul className="text-sm text-gray-300 mb-4 space-y-1">
                 <li>✨ 更深入分析商品特点</li>
                 <li>📝 提供更详细的产品信息</li>
                 <li>🎨 生成更精美的装饰效果</li>
@@ -1699,7 +1699,7 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
               <div className="flex gap-3">
                 <button
                   onClick={handleCancelUpgrade}
-                  className="flex-1 px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors text-sm"
+                  className="flex-1 px-4 py-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 transition-colors text-sm"
                 >
                   不用了
                 </button>
