@@ -79,12 +79,18 @@ export async function generateVideo(
   let vrmData: any = null; // 高级 VRM 3D 形象数据
   
   if (enableAvatar) {
-    if (useAdvancedAvatar && avatarStyle === 'female' && voiceType === 'female') {
-      // 高级模式：加载 VRM 3D 模型（仅女声+女性形象）
+    if (useAdvancedAvatar && (avatarStyle === 'female' || avatarStyle === 'male')) {
+      // 高级模式：加载 VRM 3D 模型（支持男女双性别）
       try {
         const { loadVRM, createVRMScene } = await import('@/lib/vrm/vrmLoader');
+        
+        // 根据性别选择不同的模型
+        const modelPath = avatarStyle === 'female' 
+          ? '/avatars/female/中国风可爱女娃娃.vrm'
+          : '/avatars/male/男生Q版.vrm';
+        
         const vrm = await loadVRM({
-          modelPath: '/avatars/female/中国风可爱女娃娃.vrm',
+          modelPath,
           position: { x: 0, y: -0.5, z: 0 }, // Y轴轻微降低，显示完整身体
           scale: 1.0,
         });
@@ -469,34 +475,89 @@ async function drawVRMAvatar(
   
   // 5. 配饰环绕旋转效果（查找并旋转模型周围的装饰物）
   vrm.scene.traverse((object: any) => {
-    // 查找可能的配饰对象（通常命名包含这些关键词）
     const name = object.name?.toLowerCase() || '';
-    const isAccessory = name.includes('accessory') || 
-                        name.includes('decoration') || 
-                        name.includes('ornament') ||
-                        name.includes('prop') ||
-                        object.userData?.isAccessory;
     
-    if (isAccessory && object.position) {
+    // 女生模型：三个配饰环绕旋转
+    const isFemaleAccessory = name.includes('accessory') || 
+                              name.includes('decoration') || 
+                              name.includes('ornament') ||
+                              name.includes('prop') ||
+                              object.userData?.isAccessory;
+    
+    if (isFemaleAccessory && object.position) {
       // 保存原始位置（第一次遇到时）
       if (!object.userData.originalPosition) {
         object.userData.originalPosition = object.position.clone();
-        object.userData.rotationOffset = Math.random() * Math.PI * 2; // 随机初始角度
+        object.userData.rotationOffset = Math.random() * Math.PI * 2;
       }
       
       const originalPos = object.userData.originalPosition;
-      const radius = Math.sqrt(originalPos.x ** 2 + originalPos.z ** 2); // 计算半径
-      const rotationSpeed = 0.5; // 旋转速度
+      const radius = Math.sqrt(originalPos.x ** 2 + originalPos.z ** 2);
+      const rotationSpeed = 0.5;
       const currentAngle = animationTime * rotationSpeed + object.userData.rotationOffset;
       
       // 360度环绕旋转
       object.position.x = Math.cos(currentAngle) * radius;
       object.position.z = Math.sin(currentAngle) * radius;
-      // Y轴保持原位，或添加轻微上下浮动
       object.position.y = originalPos.y + Math.sin(animationTime * 1.5 + object.userData.rotationOffset) * 0.05;
       
-      // 配饰自身也旋转
+      // 配饰自身旋转
       object.rotation.y = currentAngle;
+    }
+    
+    // 男生模型：翅膀抖动
+    const isWing = name.includes('wing') || 
+                   name.includes('\u7fc5\u8180') || // 翅膀
+                   object.userData?.isWing;
+    
+    if (isWing && object.rotation) {
+      // 保存原始旋转
+      if (!object.userData.originalRotation) {
+        object.userData.originalRotation = {
+          x: object.rotation.x,
+          y: object.rotation.y,
+          z: object.rotation.z
+        };
+      }
+      
+      const originalRot = object.userData.originalRotation;
+      // 翅膀上下扇动（Z轴旋转）
+      const flapSpeed = 8; // 快速扇动
+      const flapAmount = 0.3; // 扇动幅度
+      object.rotation.z = originalRot.z + Math.sin(animationTime * flapSpeed) * flapAmount;
+    }
+    
+    // 男生模型：乌鸦抖动
+    const isCrow = name.includes('crow') || 
+                   name.includes('raven') ||
+                   name.includes('bird') ||
+                   name.includes('\u4e4c\u9e26') || // 乌鸦
+                   name.includes('\u9e1f') || // 鸟
+                   object.userData?.isCrow;
+    
+    if (isCrow && object.rotation && object.position) {
+      // 保存原始状态
+      if (!object.userData.originalRotation) {
+        object.userData.originalRotation = {
+          x: object.rotation.x,
+          y: object.rotation.y,
+          z: object.rotation.z
+        };
+        object.userData.originalPosition = object.position.clone();
+      }
+      
+      const originalRot = object.userData.originalRotation;
+      const originalPos = object.userData.originalPosition;
+      
+      // 乌鸦抖动（小幅度随机颤抖）
+      const shakeSpeed = 12; // 快速抖动
+      const shakeAmount = 0.08; // 抖动幅度
+      object.rotation.x = originalRot.x + Math.sin(animationTime * shakeSpeed) * shakeAmount;
+      object.rotation.y = originalRot.y + Math.cos(animationTime * shakeSpeed * 1.3) * shakeAmount;
+      object.rotation.z = originalRot.z + Math.sin(animationTime * shakeSpeed * 0.7) * shakeAmount;
+      
+      // 乌鸦轻微上下浮动
+      object.position.y = originalPos.y + Math.sin(animationTime * 6) * 0.03;
     }
   });
   

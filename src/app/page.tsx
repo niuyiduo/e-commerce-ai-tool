@@ -1525,8 +1525,8 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
                         {useAdvancedAvatar 
-                          ? '🎭 使用 Q 版 3D 模型 + 智能口型同步' 
-                          : '📌 开启后使用中国风可爱女娃娃 VRM 模型（仅女声）'
+                          ? '🎭 使用 Q 版 3D 模型 + 智能口型同步 + 配饰环绕旋转' 
+                          : '📌 开启后使用 Q 版 3D 模型（支持男/女形象）'
                         }
                       </p>
                     </div>
@@ -1634,10 +1634,12 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                     {useAdvancedAvatar && (
                       <div className="p-3 bg-gradient-to-r from-[#FFD700]/10 to-[#FE2C55]/10 border border-[#FFD700]/30 rounded-lg">
                         <p className="text-sm text-[#FFD700]">
-                          🎭 已启用 <span className="font-semibold">中国风可爱女娃娃 VRM</span> 3D 模型
+                          🎭 已启用 <span className="font-semibold">
+                            {avatarStyle === 'female' ? '中国风女娃娃' : '男生Q版'} VRM
+                          </span> 3D 模型
                         </p>
                         <p className="text-xs text-gray-300 mt-1">
-                          ✨ 支持智能口型同步，仅适配女声配音
+                          ✨ 支持智能口型同步 + 配饰环绕旋转 + 多层次动画
                         </p>
                         <p className="text-xs text-[#FFD700] mt-2 font-semibold">
                           📍 默认显示位置：右上角
