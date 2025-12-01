@@ -128,8 +128,9 @@ export async function generateVideo(
   const frames: ImageData[] = [];
   const totalFrames = Math.floor(duration * fps);
   
-  // 计算音频总时长（每段字幕约3秒）
-  const audioDuration = enableVoice ? finalCaptions.length * 3 : 0; // 3秒/段
+  // 计算音频估计时长（每段字幕约1.5秒，更准确）
+  const estimatedAudioDuration = enableVoice ? finalCaptions.length * 1.5 : 0;
+  console.log(`视频总时长: ${duration}秒, 音频估计时长: ${estimatedAudioDuration}秒, 字幕数: ${finalCaptions.length}`);
 
   for (let frameIndex = 0; frameIndex < totalFrames; frameIndex++) {
     const currentTime = frameIndex / fps;
@@ -179,8 +180,13 @@ export async function generateVideo(
     
     // 添加虚拟形象（如果启用）
     if (enableAvatar) {
-      // 根据音频总时长判断是否还在说话（而不是根据当前帧的字幕）
-      const isSpeaking = enableVoice && currentTime < audioDuration;
+      // 根据音频估计时长判断是否还在说话
+      const isSpeaking = enableVoice && currentTime < estimatedAudioDuration;
+      
+      // 调试日志（每30帧输出一次）
+      if (frameIndex % 30 === 0) {
+        console.log(`帧${frameIndex}: 时间=${currentTime.toFixed(2)}s, 说话=${isSpeaking}, 音频时长=${estimatedAudioDuration}s`);
+      }
       
       if (vrmData) {
         // 高级模式：VRM 3D 形象固定在右上角
