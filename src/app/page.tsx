@@ -31,6 +31,7 @@ export default function Home() {
   const [enableAvatar, setEnableAvatar] = useState(false); // 是否启用虚拟形象
   const [avatarStyle, setAvatarStyle] = useState<'female' | 'male' | 'robot' | 'cute'>('female'); // 形象风格
   const [avatarPosition, setAvatarPosition] = useState<'bottom-left' | 'bottom-right' | 'top-right'>('bottom-right'); // 形象位置
+  const [useAdvancedAvatar, setUseAdvancedAvatar] = useState(false); // 是否使用高级 3D 形象
   
   // 功能模式：'image' 或 'video'
   const [mode, setMode] = useState<'image' | 'video'>('image');
@@ -270,6 +271,7 @@ export default function Home() {
         enableAvatar,
         avatarStyle,
         avatarPosition,
+        useAdvancedAvatar, // 高级 VRM 3D 形象
       });
       
       const url = URL.createObjectURL(videoBlob);
@@ -1503,6 +1505,34 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                 
                 {enableAvatar ? (
                   <div className="space-y-3">
+                    {/* 高级功能开关 */}
+                    <div className="mb-3 p-3 bg-gradient-to-r from-[#FE2C55]/10 to-[#FFD700]/10 border border-[#FE2C55]/30 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-[#FE2C55]">🌟 高级 3D 形象</span>
+                          <span className="text-xs bg-gradient-to-r from-[#FE2C55] to-[#FFD700] text-white px-2 py-0.5 rounded">VRM</span>
+                        </div>
+                        <button
+                          onClick={() => setUseAdvancedAvatar(!useAdvancedAvatar)}
+                          className={`px-2 py-1 text-xs rounded transition-colors ${
+                            useAdvancedAvatar
+                              ? 'bg-[#FE2C55] text-white'
+                              : 'bg-white/10 text-gray-400 hover:bg-white/20'
+                          }`}
+                        >
+                          {useAdvancedAvatar ? '✅ 已启用' : '关闭'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {useAdvancedAvatar 
+                          ? '🎭 使用 Q 版 3D 模型 + 智能口型同步' 
+                          : '📌 开启后使用中国风可爱女娃娃 VRM 模型（仅女声）'
+                        }
+                      </p>
+                    </div>
+
+                    {!useAdvancedAvatar && (
+                      <>
                     <p className="text-xs text-gray-300 mb-2 font-medium">选择虚拟形象风格：</p>
                     <div className="grid grid-cols-4 gap-3">
                       <button
@@ -1594,6 +1624,19 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                         💡 当启用配音时，形象会在"说话"时有动画效果
                       </p>
                     </div>
+                      </>
+                    )}
+                    
+                    {useAdvancedAvatar && (
+                      <div className="p-3 bg-gradient-to-r from-[#FFD700]/10 to-[#FE2C55]/10 border border-[#FFD700]/30 rounded-lg">
+                        <p className="text-sm text-[#FFD700]">
+                          🎭 已启用 <span className="font-semibold">中国风可爱女娃娃 VRM</span> 3D 模型
+                        </p>
+                        <p className="text-xs text-gray-300 mt-1">
+                          ✨ 支持智能口型同步，仅适配女声配音
+                        </p>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="p-3 bg-white/5 border border-white/10 rounded-lg">

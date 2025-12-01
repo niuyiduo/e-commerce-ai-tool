@@ -9,16 +9,19 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@pixiv/three-vrm": "^3.4.4",
     "@volcengine/openapi": "^1.32.0",
     "edge-tts-node": "^1.5.7",
     "next": "^14.2.18",
     "react": "^18.3.1",
-    "react-dom": "^18.3.1"
+    "react-dom": "^18.3.1",
+    "three": "^0.181.2"
   },
   "devDependencies": {
     "@types/node": "^22.8.6",
     "@types/react": "^18.3.27",
     "@types/react-dom": "^18.3.7",
+    "@types/three": "^0.181.0",
     "autoprefixer": "^10.4.20",
     "eslint": "^8.57.1",
     "eslint-config-next": "^14.2.18",

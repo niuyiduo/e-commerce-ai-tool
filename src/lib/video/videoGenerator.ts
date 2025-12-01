@@ -15,6 +15,7 @@ interface VideoGeneratorOptions {
   enableAvatar?: boolean; // 是否启用虚拟形象
   avatarStyle?: 'female' | 'male' | 'robot' | 'cute'; // 虚拟形象风格
   avatarPosition?: 'bottom-left' | 'bottom-right' | 'top-right'; // 形象位置
+  useAdvancedAvatar?: boolean; // 是否使用高级 VRM 3D 形象
 }
 
 /**
@@ -36,7 +37,8 @@ export async function generateVideo(
     voiceType = 'female',  // 新增：配音音色
     enableAvatar = false,  // 新增：是否启用虚拟形象
     avatarStyle = 'female',  // 新增：形象风格
-    avatarPosition = 'bottom-right'  // 新增：形象位置
+    avatarPosition = 'bottom-right',  // 新增：形象位置
+    useAdvancedAvatar = false,  // 新增：是否使用高级 VRM 3D 形象
   } = options;
 
   // 验证参数
@@ -74,11 +76,40 @@ export async function generateVideo(
 
   // 加载虚拟形象（如果启用）
   let avatarImage: HTMLImageElement | null = null;
+  let vrmData: any = null; // 高级 VRM 3D 形象数据
+  
   if (enableAvatar) {
-    try {
-      avatarImage = await loadAvatarImage(avatarStyle);
-    } catch (error) {
-      console.warn('虚拟形象加载失败，将不显示形象:', error);
+    if (useAdvancedAvatar && avatarStyle === 'female' && voiceType === 'female') {
+      // 高级模式：加载 VRM 3D 模型（仅女声+女性形象）
+      try {
+        const { loadVRM, createVRMScene } = await import('@/lib/vrm/vrmLoader');
+        const vrm = await loadVRM({
+          modelPath: '/avatars/female/中国风可爱女娃娃.vrm',
+          position: { x: 0, y: 0, z: 0 },
+          scale: 1,
+        });
+        
+        if (vrm) {
+          // 创建 3D 渲染场景
+          const scene3D = createVRMScene(200, 200);
+          scene3D.scene.add(vrm.scene);
+          vrmData = { vrm, scene3D };
+          console.log('✅ 高级 VRM 3D 形象加载成功');
+        } else {
+          console.warn('⚠️ VRM 加载失败，降级为基础形象');
+          avatarImage = await loadAvatarImage(avatarStyle);
+        }
+      } catch (error) {
+        console.warn('⚠️ VRM 加载失败，降级为基础形象:', error);
+        avatarImage = await loadAvatarImage(avatarStyle);
+      }
+    } else {
+      // 基础模式：加载 Emoji 形象
+      try {
+        avatarImage = await loadAvatarImage(avatarStyle);
+      } catch (error) {
+        console.warn('虚拟形象加载失败，将不显示形象:', error);
+      }
     }
   }
 
@@ -138,9 +169,16 @@ export async function generateVideo(
     }
     
     // 添加虚拟形象（如果启用）
-    if (enableAvatar && avatarImage) {
+    if (enableAvatar) {
       const isSpeaking = !!(enableVoice && finalCaptions[imageIndex]); // 判断是否在"说话"
-      drawAvatar(ctx, canvas.width, canvas.height, avatarImage, avatarPosition, currentTime, isSpeaking);
+      
+      if (vrmData) {
+        // 高级模式：渲染 VRM 3D 形象
+        await drawVRMAvatar(ctx, canvas.width, canvas.height, vrmData, avatarPosition, currentTime, isSpeaking);
+      } else if (avatarImage) {
+        // 基础模式：绘制 2D Emoji 形象
+        drawAvatar(ctx, canvas.width, canvas.height, avatarImage, avatarPosition, currentTime, isSpeaking);
+      }
     }
     
     // 保存帧数据
@@ -300,6 +338,88 @@ function drawAvatar(
   
   // 恢复状态
   ctx.restore();
+}
+
+/**
+ * 绘制 VRM 3D 虚拟形象
+ */
+async function drawVRMAvatar(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  vrmData: any,
+  position: 'bottom-left' | 'bottom-right' | 'top-right',
+  currentTime: number,
+  isSpeaking: boolean
+) {
+  const { vrm, scene3D } = vrmData;
+  const { scene, camera, renderer } = scene3D;
+  
+  const avatarSize = 150; // VRM 形象略大
+  const padding = 20;
+  
+  // 计算位置
+  let x: number, y: number;
+  switch (position) {
+    case 'bottom-left':
+      x = padding;
+      y = height - avatarSize - padding;
+      break;
+    case 'bottom-right':
+      x = width - avatarSize - padding;
+      y = height - avatarSize - padding;
+      break;
+    case 'top-right':
+      x = width - avatarSize - padding;
+      y = padding;
+      break;
+  }
+  
+  // 口型同步：根据说话状态调整表情
+  if (vrm.expressionManager) {
+    if (isSpeaking) {
+      // 模拟口型动画（正弦波调制）
+      const mouthValue = (Math.sin(currentTime * 15) + 1) / 2; // 0-1 范围
+      try {
+        vrm.expressionManager.setValue('aa', mouthValue * 0.8);
+        vrm.expressionManager.setValue('happy', 0.3); // 微笑表情
+      } catch (e) {
+        // 忽略不存在的表情
+      }
+    } else {
+      try {
+        vrm.expressionManager.setValue('aa', 0);
+        vrm.expressionManager.setValue('happy', 0);
+      } catch (e) {
+        // 忽略
+      }
+    }
+    vrm.expressionManager.update();
+  }
+  
+  // 更新 VRM 模型（每帧更新）
+  vrm.update(1 / 30);
+  
+  // 渲染 VRM 到临时 Canvas
+  renderer.render(scene, camera);
+  
+  // 将渲染结果绘制到目标 Canvas
+  ctx.drawImage(
+    renderer.domElement,
+    0, 0, renderer.domElement.width, renderer.domElement.height,
+    x, y, avatarSize, avatarSize
+  );
+  
+  // 添加发光效果（说话时）
+  if (isSpeaking) {
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)'; // 金色光晕（区分于基础版本）
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(x + avatarSize / 2, y + avatarSize / 2, avatarSize / 2 + 8, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
 }
 
 /**
