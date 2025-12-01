@@ -378,8 +378,8 @@ async function drawVRMAvatar(
  // 3D 动画效果：让角色"活"起来
   const animationTime = currentTime * 2; // 动画时间
   
-  // 1. 呼吸动画（身体上下起伏）
-  const breathingOffset = Math.sin(animationTime * 1.5) * 0.02; // 轻微上下
+  // 1. 呼吸动画（身体上下起伏）- 减小幅度
+  const breathingOffset = Math.sin(animationTime * 1.5) * 0.008; // 更轻微（原 0.02）
   vrm.scene.position.y += breathingOffset;
   
   // 2. 头部微动（左右轻微摆动）
@@ -391,12 +391,14 @@ async function drawVRMAvatar(
     }
   }
   
-  // 3. 眨眼动画（随机眨眼）
+  // 3. 眨眼动画（慢速大幅度眨眼）
   if (vrm.expressionManager) {
-    const blinkCycle = Math.sin(animationTime * 3) * 0.5 + 0.5; // 0-1 循环
-    const shouldBlink = blinkCycle > 0.9; // 10% 时间眨眼
+    const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5; // 降低频率（原 3）
+    const shouldBlink = blinkCycle > 0.85; // 增大眨眼时长（15% 时间，原 10%）
     try {
-      vrm.expressionManager.setValue('blink', shouldBlink ? 1.0 : 0);
+      vrm.expressionManager.setValue('blink', shouldBlink ? 1.0 : 0); // 全闭合
+      vrm.expressionManager.setValue('blinkLeft', shouldBlink ? 1.0 : 0);
+      vrm.expressionManager.setValue('blinkRight', shouldBlink ? 1.0 : 0);
     } catch (e) {
       // 忽略
     }
@@ -405,20 +407,32 @@ async function drawVRMAvatar(
   // 4. 口型同步：根据说话状态调整表情
   if (vrm.expressionManager) {
     if (isSpeaking) {
-      // 模拟口型动画（大幅度张嘴）
-      const mouthValue = Math.abs(Math.sin(animationTime * 8)) * 1.0; // 高频率张合
+      // 模拟口型动画（最大幅度张嘴）
+      const mouthValue = Math.abs(Math.sin(animationTime * 10)) * 1.0; // 高频率张合
       try {
-        vrm.expressionManager.setValue('aa', mouthValue); // 张嘴幅度 100%
-        vrm.expressionManager.setValue('ih', mouthValue * 0.4); // 伊
-        vrm.expressionManager.setValue('ou', mouthValue * 0.3); // 欧
+        // 多种口型叠加，增强可见度
+        vrm.expressionManager.setValue('aa', mouthValue); // 张嘴 100%
+        vrm.expressionManager.setValue('A', mouthValue); // 大写A
+        vrm.expressionManager.setValue('ih', mouthValue * 0.6); // 伊
+        vrm.expressionManager.setValue('I', mouthValue * 0.6); // 大写I
+        vrm.expressionManager.setValue('ou', mouthValue * 0.5); // 欧
+        vrm.expressionManager.setValue('O', mouthValue * 0.5); // 大写O
+        vrm.expressionManager.setValue('ee', mouthValue * 0.4); // 嘉
+        vrm.expressionManager.setValue('E', mouthValue * 0.4); // 大写E
       } catch (e) {
         // 忽略不存在的表情
       }
     } else {
       try {
+        // 闭嘴状态：清空所有口型表情
         vrm.expressionManager.setValue('aa', 0);
+        vrm.expressionManager.setValue('A', 0);
         vrm.expressionManager.setValue('ih', 0);
+        vrm.expressionManager.setValue('I', 0);
         vrm.expressionManager.setValue('ou', 0);
+        vrm.expressionManager.setValue('O', 0);
+        vrm.expressionManager.setValue('ee', 0);
+        vrm.expressionManager.setValue('E', 0);
       } catch (e) {
         // 忽略
       }
