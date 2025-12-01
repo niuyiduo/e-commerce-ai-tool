@@ -384,18 +384,18 @@ async function drawVRMAvatar(
  // 3D 动画效果：让角色"活"起来
   const animationTime = currentTime * 2; // 动画时间
   
-  // 1. 呼吸动画（身体上下起伏）- 减小幅度
-  const breathingOffset = Math.sin(animationTime * 1.5) * 0.008; // 更轻微（原 0.02）
+  // 1. 呼吸动画（身体上下起伏）- 增大幅度
+  const breathingOffset = Math.sin(animationTime * 1.5) * 0.02; // 增大到0.02（原0.008）
   vrm.scene.position.y += breathingOffset;
   
-  // 2. 整体模型微动（适配无骨骼模型）
+  // 2. 整体模型微动（适配无骨骼模型）- 增大幅度
   // 左右轻微摆动
-  vrm.scene.rotation.y += Math.sin(animationTime * 0.8) * 0.005; // 微微旋转
-  vrm.scene.rotation.z = Math.sin(animationTime * 0.6) * 0.02; // 微微倾斜
+  vrm.scene.rotation.y += Math.sin(animationTime * 0.8) * 0.02; // 增大到0.02（原0.005）
+  vrm.scene.rotation.z = Math.sin(animationTime * 0.6) * 0.05; // 增大到0.05（原0.02）
   
-  // 3. 模拟随风效果（整体摆动）
-  const swayX = Math.sin(animationTime * 0.5) * 0.01; // X轴摆动
-  const swayZ = Math.sin(animationTime * 0.7) * 0.015; // Z轴摆动
+  // 3. 模拟随风效果（整体摆动）- 增大幅度
+  const swayX = Math.sin(animationTime * 0.5) * 0.03; // 增大到0.03（原0.01）
+  const swayZ = Math.sin(animationTime * 0.7) * 0.04; // 增大到0.04（原0.015）
   vrm.scene.rotation.x = swayX;
   // vrm.scene.rotation.z 已经在上面设置了
   
@@ -436,7 +436,7 @@ async function drawVRMAvatar(
     const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5;
     const shouldBlink = blinkCycle > 0.85;
     if (shouldBlink) {
-      const blinkScale = 1 - (blinkCycle - 0.85) / 0.15 * 0.03; // 轻微缩小
+      const blinkScale = 1 - (blinkCycle - 0.85) / 0.15 * 0.15; // 增大缩放幅度（原0.03→0.15）
       vrm.scene.scale.setScalar(blinkScale);
     } else {
       vrm.scene.scale.setScalar(1.0);
@@ -487,10 +487,15 @@ async function drawVRMAvatar(
     // 无表情系统：用整体前后移动 + 旋转模拟张嘴
     if (isSpeaking) {
       const talkCycle = Math.sin(animationTime * 10); // 高频率
-      // Z轴前后移动（模拟嘴巴伸出）
-      vrm.scene.position.z += talkCycle * 0.015;
-      // 轻微上下摇头效果
-      vrm.scene.rotation.x += talkCycle * 0.03;
+      // Z轴前后移动（模拟嘴巴伸出）- 增大幅度
+      vrm.scene.position.z += talkCycle * 0.08; // 原0.015→0.08
+      // 上下摇头效果 - 增大幅度
+      vrm.scene.rotation.x += talkCycle * 0.15; // 原0.03→0.15
+      // 增加左右摇头
+      vrm.scene.rotation.y += Math.cos(animationTime * 10) * 0.1;
+      // 增加缩放效果（模拟张嘴）
+      const scaleEffect = 1 + Math.abs(talkCycle) * 0.08;
+      vrm.scene.scale.setScalar(scaleEffect);
     }
   }
   
