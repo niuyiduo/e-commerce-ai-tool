@@ -44,8 +44,37 @@ export async function loadVRM(config: VRMConfig): Promise<VRM | null> {
     // 旋转模型使其面向摄像机（VRM标准旋转）
     VRMUtils.rotateVRM0(vrm);
     
-    // 修正模型朝向：原本向右侧，需要向右旋转90度回正
-    vrm.scene.rotation.y = Math.PI / 2; // 顺时针旋转90度
+    // 修正模型朝向：让模型正面朝向摄像机（Z轴正方向）
+    vrm.scene.rotation.y = Math.PI; // 旋转180度，背转正面
+
+    // 修复手臂姿势：从T-pose改为自然垂放
+    if (vrm.humanoid) {
+      try {
+        // 左臂自然垂放
+        const leftUpperArm = vrm.humanoid.getNormalizedBoneNode('leftUpperArm');
+        const leftLowerArm = vrm.humanoid.getNormalizedBoneNode('leftLowerArm');
+        if (leftUpperArm) {
+          leftUpperArm.rotation.z = 0; // 重置肩部旋转
+          leftUpperArm.rotation.x = 0;
+        }
+        if (leftLowerArm) {
+          leftLowerArm.rotation.z = 0; // 手肘自然
+        }
+        
+        // 右臂自然垂放
+        const rightUpperArm = vrm.humanoid.getNormalizedBoneNode('rightUpperArm');
+        const rightLowerArm = vrm.humanoid.getNormalizedBoneNode('rightLowerArm');
+        if (rightUpperArm) {
+          rightUpperArm.rotation.z = 0;
+          rightUpperArm.rotation.x = 0;
+        }
+        if (rightLowerArm) {
+          rightLowerArm.rotation.z = 0;
+        }
+      } catch (error) {
+        console.warn('手臂姿势调整失败:', error);
+      }
+    }
 
     console.log('VRM 模型加载成功:', vrm);
     return vrm;
