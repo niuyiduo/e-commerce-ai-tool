@@ -45,7 +45,8 @@ export async function loadVRM(config: VRMConfig): Promise<VRM | null> {
     VRMUtils.rotateVRM0(vrm);
     
     // 修正模型朝向：让模型正面朝向摄像机（Z轴正方向）
-    vrm.scene.rotation.y = Math.PI; // 旋转180度，背转正面
+    // 尝试270度旋转（-90度）
+    vrm.scene.rotation.y = -Math.PI / 2;
 
     // 修复手臂姿势：从T-pose改为自然垂放
     if (vrm.humanoid) {
@@ -59,26 +60,26 @@ export async function loadVRM(config: VRMConfig): Promise<VRM | null> {
         let leftArmAdjusted = false;
         let rightArmAdjusted = false;
         
-        // 左臂自然垂放
+        // 左臂自然垂放（反转Z轴方向）
         for (const name of leftArmNames) {
           const leftUpperArm = vrm.humanoid.getNormalizedBoneNode(name as any);
           if (leftUpperArm) {
-            leftUpperArm.rotation.z = -1.2; // 向下旋转（负值=向下）
+            leftUpperArm.rotation.z = 1.2; // 反转：之前-1.2导致朝上
             leftUpperArm.rotation.x = 0.2; // 向前微倾
             leftArmAdjusted = true;
-            console.log(`✅ 左臂调整成功: ${name}`);
+            console.log(`✅ 左臂调整成功(向下): ${name}`);
             break;
           }
         }
         
-        // 右臂自然垂放
+        // 右臂自然垂放（反转Z轴方向）
         for (const name of rightArmNames) {
           const rightUpperArm = vrm.humanoid.getNormalizedBoneNode(name as any);
           if (rightUpperArm) {
-            rightUpperArm.rotation.z = 1.2; // 向下旋转（正值=向下）
+            rightUpperArm.rotation.z = -1.2; // 反转：之前1.2导致朝上
             rightUpperArm.rotation.x = 0.2;
             rightArmAdjusted = true;
-            console.log(`✅ 右臂调整成功: ${name}`);
+            console.log(`✅ 右臂调整成功(向下): ${name}`);
             break;
           }
         }
