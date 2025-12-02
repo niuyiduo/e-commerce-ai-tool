@@ -65,13 +65,13 @@ export function createVRMScene(canvasWidth: number, canvasHeight: number) {
 
   // 摄像机（调整到能看到全身正面）
   const camera = new THREE.PerspectiveCamera(
-    35,  // FOV 35度，适合全身显示
+    30,  // FOV 30度，看到更完整的身体
     canvasWidth / canvasHeight,
     0.1,
     20
   );
-  camera.position.set(0, 0.5, 2.5); // 正面Z轴，居中高度，适当距离
-  camera.lookAt(0, 0.5, 0); // 看向模型中心点
+  camera.position.set(0, 0.8, 3.5); // 拉远摄像机，提高视角，看到全身
+  camera.lookAt(0, 0.8, 0); // 看向模型中心点（腰部附近）
 
   // 光源（增强正面光照）
   const light = new THREE.DirectionalLight(0xffffff, 1.5); // 增强亮度

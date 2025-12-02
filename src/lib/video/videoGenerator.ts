@@ -529,28 +529,23 @@ async function drawVRMAvatar(
         }
       } catch (e) {}
     } else if (vrm.expressionManager && !isSpeaking) {
-      // 不说话时闭嘴
+      // 不说话时：默认表情（微笑）
       try {
+        // 重置所有口型
         ['aa', 'A', 'ih', 'I', 'ee', 'E', 'ou', 'O', 'U'].forEach(shape => {
           try { vrm.expressionManager.setValue(shape, 0); } catch (e) {}
         });
+        // 设置默认微笑表情
+        vrm.expressionManager.setValue('neutral', 0.8);
+        vrm.expressionManager.setValue('happy', 0.3);
       } catch (e) {}
     }
 
-    // 3. 微妙的身体动作（不说话时静止）
-    if (isSpeaking) {
-      const breathingOffset = Math.sin(animationTime * 0.8) * 0.005;
-      vrm.scene.position.y += breathingOffset;
-      
-      vrm.scene.rotation.y += Math.sin(animationTime * 0.5) * 0.008;
-      vrm.scene.rotation.z = Math.sin(animationTime * 0.4) * 0.015;
-      vrm.scene.rotation.x += Math.sin(animationTime * 0.6) * 0.01;
-    } else {
-      vrm.scene.position.y = 0;
-      vrm.scene.rotation.x = 0;
-      vrm.scene.rotation.y = 0;
-      vrm.scene.rotation.z = 0;
-    }
+    // 3. 保持静止姿势（不旋转、不摇摆）
+    // 只有表情和口型，身体完全静止
+    vrm.scene.position.set(0, 0, 0);
+    vrm.scene.rotation.set(0, 0, 0);
+    vrm.scene.scale.set(1.0, 1.0, 1.0);
 
     // 4. 更新表情管理器
     if (vrm.expressionManager) {
