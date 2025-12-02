@@ -101,7 +101,7 @@ export async function generateVideo(
         });
         
         if (vrm) {
-          const scene3D = createVRMScene(400, 400);
+          const scene3D = createVRMScene(800, 800); // 提高到800x800，增强清晰度
           scene3D.scene.add(vrm.scene);
           vrmData = { vrm, scene3D, isPremium: true }; // 标记为顶级模型
           console.log(`⭐ 顶级 VRoid 形象加载成功 (旋转: ${(testRotations[rotationIndex] * 180 / Math.PI).toFixed(0)}°)`);

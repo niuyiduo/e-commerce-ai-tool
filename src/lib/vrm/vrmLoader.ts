@@ -138,13 +138,14 @@ export function createVRMScene(canvasWidth: number, canvasHeight: number) {
   const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // 增强环境光
   scene.add(ambientLight);
 
-  // 渲染器
+  // 渲染器（增强清晰度和抗锯齿）
   const renderer = new THREE.WebGLRenderer({
     alpha: true,
-    antialias: true,
+    antialias: true,  // 开启抗锯齿
+    powerPreference: 'high-performance', // 高性能模式
   });
   renderer.setSize(canvasWidth, canvasHeight);
-  renderer.setPixelRatio(window.devicePixelRatio);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // 限制像素比，避免过度渲染
   // Three.js r152+ 使用 outputColorSpace 代替 outputEncoding
   (renderer as any).outputColorSpace = THREE.SRGBColorSpace;
 
@@ -223,7 +224,9 @@ export function renderVRMToCanvas(
       break;
   }
 
-  // 绘制渲染结果
+  // 绘制渲染结果（使用高质量插值）
+  ctx.imageSmoothingEnabled = true; // 开启图像平滑
+  ctx.imageSmoothingQuality = 'high'; // 设置为高质量平滑
   ctx.drawImage(
     renderer.domElement,
     0, 0, renderer.domElement.width, renderer.domElement.height,
