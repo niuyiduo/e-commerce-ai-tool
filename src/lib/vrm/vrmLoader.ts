@@ -63,8 +63,8 @@ export async function loadVRM(config: VRMConfig): Promise<VRM | null> {
         for (const name of leftArmNames) {
           const leftUpperArm = vrm.humanoid.getNormalizedBoneNode(name as any);
           if (leftUpperArm) {
-            leftUpperArm.rotation.z = 0; // 重置肩部旋转
-            leftUpperArm.rotation.x = 0.3; // 向前微倾
+            leftUpperArm.rotation.z = -1.2; // 向下旋转（负值=向下）
+            leftUpperArm.rotation.x = 0.2; // 向前微倾
             leftArmAdjusted = true;
             console.log(`✅ 左臂调整成功: ${name}`);
             break;
@@ -75,8 +75,8 @@ export async function loadVRM(config: VRMConfig): Promise<VRM | null> {
         for (const name of rightArmNames) {
           const rightUpperArm = vrm.humanoid.getNormalizedBoneNode(name as any);
           if (rightUpperArm) {
-            rightUpperArm.rotation.z = 0;
-            rightUpperArm.rotation.x = 0.3;
+            rightUpperArm.rotation.z = 1.2; // 向下旋转（正值=向下）
+            rightUpperArm.rotation.x = 0.2;
             rightArmAdjusted = true;
             console.log(`✅ 右臂调整成功: ${name}`);
             break;
