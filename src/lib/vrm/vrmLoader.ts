@@ -50,29 +50,45 @@ export async function loadVRM(config: VRMConfig): Promise<VRM | null> {
     // 修复手臂姿势：从T-pose改为自然垂放
     if (vrm.humanoid) {
       try {
+        console.log('🦴 开始调整手臂姿势...');
+        
+        // 尝试多种骨骼命名方式（VRM标准 + VRoid可能的命名）
+        const leftArmNames = ['leftUpperArm', 'LeftUpperArm', 'leftShoulder', 'LeftShoulder'];
+        const rightArmNames = ['rightUpperArm', 'RightUpperArm', 'rightShoulder', 'RightShoulder'];
+        
+        let leftArmAdjusted = false;
+        let rightArmAdjusted = false;
+        
         // 左臂自然垂放
-        const leftUpperArm = vrm.humanoid.getNormalizedBoneNode('leftUpperArm');
-        const leftLowerArm = vrm.humanoid.getNormalizedBoneNode('leftLowerArm');
-        if (leftUpperArm) {
-          leftUpperArm.rotation.z = 0; // 重置肩部旋转
-          leftUpperArm.rotation.x = 0;
-        }
-        if (leftLowerArm) {
-          leftLowerArm.rotation.z = 0; // 手肘自然
+        for (const name of leftArmNames) {
+          const leftUpperArm = vrm.humanoid.getNormalizedBoneNode(name as any);
+          if (leftUpperArm) {
+            leftUpperArm.rotation.z = 0; // 重置肩部旋转
+            leftUpperArm.rotation.x = 0.3; // 向前微倾
+            leftArmAdjusted = true;
+            console.log(`✅ 左臂调整成功: ${name}`);
+            break;
+          }
         }
         
         // 右臂自然垂放
-        const rightUpperArm = vrm.humanoid.getNormalizedBoneNode('rightUpperArm');
-        const rightLowerArm = vrm.humanoid.getNormalizedBoneNode('rightLowerArm');
-        if (rightUpperArm) {
-          rightUpperArm.rotation.z = 0;
-          rightUpperArm.rotation.x = 0;
+        for (const name of rightArmNames) {
+          const rightUpperArm = vrm.humanoid.getNormalizedBoneNode(name as any);
+          if (rightUpperArm) {
+            rightUpperArm.rotation.z = 0;
+            rightUpperArm.rotation.x = 0.3;
+            rightArmAdjusted = true;
+            console.log(`✅ 右臂调整成功: ${name}`);
+            break;
+          }
         }
-        if (rightLowerArm) {
-          rightLowerArm.rotation.z = 0;
+        
+        if (!leftArmAdjusted || !rightArmAdjusted) {
+          console.warn('⚠️ 部分手臂无法调整，VRoid模型可能使用自定义骨骼命名');
+          console.log('可用骨骼节点:', Object.keys(vrm.humanoid.humanBones || {}));
         }
       } catch (error) {
-        console.warn('手臂姿势调整失败:', error);
+        console.warn('❌ 手臂姿势调整失败:', error);
       }
     }
 
