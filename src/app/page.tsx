@@ -32,6 +32,7 @@ export default function Home() {
   const [avatarStyle, setAvatarStyle] = useState<'female' | 'male' | 'robot' | 'cute'>('female'); // 形象风格
   const [avatarPosition, setAvatarPosition] = useState<'bottom-left' | 'bottom-right' | 'top-right'>('bottom-right'); // 形象位置
   const [useAdvancedAvatar, setUseAdvancedAvatar] = useState(false); // 是否使用高级 3D 形象
+  const [usePremiumAvatar, setUsePremiumAvatar] = useState(false); // 新增：是否使用顶级 VRoid 形象
   
   // 功能模式：'image' 或 'video'
   const [mode, setMode] = useState<'image' | 'video'>('image');
@@ -272,6 +273,7 @@ export default function Home() {
         avatarStyle,
         avatarPosition,
         useAdvancedAvatar, // 高级 VRM 3D 形象
+        usePremiumAvatar,  // 顶级 VRoid 形象
       });
       
       const url = URL.createObjectURL(videoBlob);
@@ -1530,6 +1532,43 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                 
                 {enableAvatar ? (
                   <div className="space-y-3">
+                    {/* 顶级VRoid形象开关 */}
+                    <div className="mb-3 p-3 bg-gradient-to-r from-[#FFD700]/10 to-[#FF6B00]/10 border border-[#FFD700]/30 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-semibold text-[#FFD700]">⭐ 顶级 VRoid 形象</span>
+                          <span className="text-xs bg-gradient-to-r from-[#FFD700] to-[#FF6B00] text-white px-2 py-0.5 rounded">女声</span>
+                        </div>
+                        <button
+                          onClick={() => {
+                            setUsePremiumAvatar(!usePremiumAvatar);
+                            if (!usePremiumAvatar) {
+                              setUseAdvancedAvatar(false); // 互斥
+                              setVoiceType('female'); // 自动切换为女声
+                            }
+                          }}
+                          className={`px-2 py-1 text-xs rounded transition-colors ${
+                            usePremiumAvatar
+                              ? 'bg-[#FFD700] text-black font-bold'
+                              : 'bg-white/10 text-gray-400 hover:bg-white/20'
+                          }`}
+                        >
+                          {usePremiumAvatar ? '✅ 已启用' : '关闭'}
+                        </button>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {usePremiumAvatar 
+                          ? '🎭 VRoid Studio 女性模型 + 真实表情 + 精确口型同步 + 配音动作同步' 
+                          : '📌 开启后使用 VRoid Studio 创建的顶级模型（仅女性形象，配女声）'
+                        }
+                      </p>
+                      {usePremiumAvatar && voiceType !== 'female' && (
+                        <p className="text-xs text-[#FF6B00] mt-2 font-semibold">
+                          ⚠️ 提示：顶级VRoid仅支持女性形象，建议配女声使用
+                        </p>
+                      )}
+                    </div>
+                    
                     {/* 高级功能开关 */}
                     <div className="mb-3 p-3 bg-gradient-to-r from-[#FE2C55]/10 to-[#FFD700]/10 border border-[#FE2C55]/30 rounded-lg">
                       <div className="flex items-center justify-between">
@@ -1538,7 +1577,10 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                           <span className="text-xs bg-gradient-to-r from-[#FE2C55] to-[#FFD700] text-white px-2 py-0.5 rounded">VRM</span>
                         </div>
                         <button
-                          onClick={() => setUseAdvancedAvatar(!useAdvancedAvatar)}
+                          onClick={() => {
+                            setUseAdvancedAvatar(!useAdvancedAvatar);
+                            if (!useAdvancedAvatar) setUsePremiumAvatar(false); // 互斥
+                          }}
                           className={`px-2 py-1 text-xs rounded transition-colors ${
                             useAdvancedAvatar
                               ? 'bg-[#FE2C55] text-white'

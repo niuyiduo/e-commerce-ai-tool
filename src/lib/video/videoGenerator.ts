@@ -16,6 +16,7 @@ interface VideoGeneratorOptions {
   avatarStyle?: 'female' | 'male' | 'robot' | 'cute'; // 虚拟形象风格
   avatarPosition?: 'bottom-left' | 'bottom-right' | 'top-right'; // 形象位置
   useAdvancedAvatar?: boolean; // 是否使用高级 VRM 3D 形象
+  usePremiumAvatar?: boolean; // 是否使用顶级 VRoid 形象
 }
 
 /**
@@ -39,6 +40,7 @@ export async function generateVideo(
     avatarStyle = 'female',  // 新增：形象风格
     avatarPosition = 'bottom-right',  // 新增：形象位置
     useAdvancedAvatar = false,  // 新增：是否使用高级 VRM 3D 形象
+    usePremiumAvatar = false,  // 新增：是否使用顶级 VRoid 形象
   } = options;
 
   // 验证参数
@@ -76,10 +78,37 @@ export async function generateVideo(
 
   // 加载虚拟形象（如果启用）
   let avatarImage: HTMLImageElement | null = null;
-  let vrmData: any = null; // 高级 VRM 3D 形象数据
+  let vrmData: any = null; // 高级/顶级 VRM 3D 形象数据
   
   if (enableAvatar) {
-    if (useAdvancedAvatar && (avatarStyle === 'female' || avatarStyle === 'male')) {
+    // 优先级：顶级VRoid > 高级VRM > 基础形象
+    if (usePremiumAvatar && avatarStyle === 'female') {
+      // 顶级模式：加载 VRoid Studio 模型（目前仅支持女性）
+      try {
+        const { loadVRM, createVRMScene } = await import('@/lib/vrm/vrmLoader');
+        
+        const modelPath = '/avatars/female/红裙女孩.vrm'; // VRoid Studio 模型
+        
+        const vrm = await loadVRM({
+          modelPath,
+          position: { x: 0, y: 0, z: 0 },
+          scale: 1.0,
+        });
+        
+        if (vrm) {
+          const scene3D = createVRMScene(400, 400);
+          scene3D.scene.add(vrm.scene);
+          vrmData = { vrm, scene3D, isPremium: true }; // 标记为顶级模型
+          console.log('⭐ 顶级 VRoid 形象加载成功');
+        } else {
+          console.warn('⚠️ VRoid 加载失败，降级为基础形象');
+          avatarImage = await loadAvatarImage(avatarStyle);
+        }
+      } catch (error) {
+        console.warn('⚠️ VRoid 加载失败，降级为基础形象:', error);
+        avatarImage = await loadAvatarImage(avatarStyle);
+      }
+    } else if (useAdvancedAvatar && (avatarStyle === 'female' || avatarStyle === 'male')) {
       // 高级模式：加载 VRM 3D 模型（支持男女双性别）
       try {
         const { loadVRM, createVRMScene } = await import('@/lib/vrm/vrmLoader');
@@ -99,7 +128,7 @@ export async function generateVideo(
           // 创建 3D 渲染场景（增大渲染尺寸以提高清晰度）
           const scene3D = createVRMScene(400, 400);
           scene3D.scene.add(vrm.scene);
-          vrmData = { vrm, scene3D };
+          vrmData = { vrm, scene3D, isPremium: false }; // 标记为高级模型
           console.log('✅ 高级 VRM 3D 形象加载成功');
         } else {
           console.warn('⚠️ VRM 加载失败，降级为基础形象');
@@ -429,113 +458,66 @@ function drawAvatar(
 
 /**
  * 绘制 VRM 3D 虚拟形象
+ * @param isPremium - 是否为顶级VRoid模型（支持真实表情和口型）
  */
 async function drawVRMAvatar(
   ctx: CanvasRenderingContext2D,
   width: number,
   height: number,
   vrmData: any,
-  position: 'bottom-left' | 'bottom-right' | 'top-right',
+  position: 'top-right',
   currentTime: number,
   isSpeaking: boolean
 ) {
   const { vrm, scene3D } = vrmData;
+  const isPremium = vrmData.isPremium || false; // 是否为顶级VRoid模型
   const { scene, camera, renderer } = scene3D;
-  
-  const avatarSize = 350; // VRM 形象增大到350px（原250）
+
+  // 设置显示位置（固定右上角）
+  const avatarSize = Math.min(width, height) * 0.25;
   const padding = 20;
+  const x = width - avatarSize - padding;
+  const y = padding;
   
-  // 计算位置
-  let x: number, y: number;
-  switch (position) {
-    case 'bottom-left':
-      x = padding;
-      y = height - avatarSize - padding;
-      break;
-    case 'bottom-right':
-      x = width - avatarSize - padding;
-      y = height - avatarSize - padding;
-      break;
-    case 'top-right':
-      x = width - avatarSize - padding;
-      y = padding;
-      break;
-  }
-  
- // 3D 动画效果：让角色"活"起来
-  const animationTime = currentTime * 2; // 动画时间
-  
-  // 只在说话时才有动画，不说话时完全静止
-  if (isSpeaking) {
-    // 1. 呼吸动画（身体上下起伏）- 减慢速度
-    const breathingOffset = Math.sin(animationTime * 0.8) * 0.005; // 降低频率到0.8
-    vrm.scene.position.y += breathingOffset;
-    
-    // 2. 整体模型微动（适配无骨骼模型）- 减慢速度
-    // 左右轻微摆动
-    vrm.scene.rotation.y += Math.sin(animationTime * 0.5) * 0.008; // 降低频率到0.5
-    vrm.scene.rotation.z = Math.sin(animationTime * 0.4) * 0.015; // 降低频率到0.4
-    
-    // 3. 模拟随风效果（整体摆动）- 减慢速度
-    const swayX = Math.sin(animationTime * 0.3) * 0.01; // 降低频率到0.3
-    const swayZ = Math.sin(animationTime * 0.4) * 0.012; // 降低频率到0.4
-    vrm.scene.rotation.x = swayX;
-  } else {
-    // 不说话时：重置所有动画，保持正面静止
-    vrm.scene.position.y = 0;
-    vrm.scene.rotation.x = 0;
-    vrm.scene.rotation.y = 0;
-    vrm.scene.rotation.z = 0;
-  }
-  
-  // 如果有骨骼系统，则使用骨骼动画（兼容性处理）
-  if (vrm.humanoid) {
-    const head = vrm.humanoid.getNormalizedBoneNode('head');
-    if (head) {
-      head.rotation.y = Math.sin(animationTime * 0.8) * 0.1;
-      head.rotation.z = Math.sin(animationTime * 0.6) * 0.05;
+  const animationTime = currentTime * 2;
+
+  console.log(`模型类型: ${isPremium ? '顶级VRoid' : '高级Q版'}, 说话: ${isSpeaking}`);
+
+  // ========================
+  // 顶级 VRoid 模型：使用真实表情系统
+  // ========================
+  if (isPremium) {
+    // 1. 自动眨眼（VRM自带）
+    if (vrm.expressionManager) {
+      try {
+        const blinkCycle = Math.sin(animationTime * 0.8 + Math.sin(animationTime * 0.3) * 2);
+        if (blinkCycle > 0.95) {
+          vrm.expressionManager.setValue('blink', 1.0);
+          vrm.expressionManager.setValue('blinkLeft', 1.0);
+          vrm.expressionManager.setValue('blinkRight', 1.0);
+        } else {
+          vrm.expressionManager.setValue('blink', 0);
+          vrm.expressionManager.setValue('blinkLeft', 0);
+          vrm.expressionManager.setValue('blinkRight', 0);
+        }
+      } catch (e) {}
     }
-    
-    const spine = vrm.humanoid.getNormalizedBoneNode('spine');
-    if (spine) {
-      spine.rotation.z = Math.sin(animationTime * 0.5) * 0.03;
-      spine.rotation.x = Math.sin(animationTime * 0.7) * 0.02;
-    }
-    
-    const chest = vrm.humanoid.getNormalizedBoneNode('chest');
-    if (chest) {
-      chest.rotation.z = Math.sin(animationTime * 0.6 + 1) * 0.025;
-    }
-  }
-  
-  // 4. 眨眼效果（仅使用表情系统，不再用缩放）
-  const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5;
-  const shouldBlink = blinkCycle > 0.85;
-  
-  // 尝试使用表情系统（如果有）
-  if (vrm.expressionManager) {
-    try {
-      vrm.expressionManager.setValue('blink', shouldBlink ? 1.0 : 0);
-      vrm.expressionManager.setValue('blinkLeft', shouldBlink ? 1.0 : 0);
-      vrm.expressionManager.setValue('blinkRight', shouldBlink ? 1.0 : 0);
-    } catch (e) {
-      // 忽略
-    }
-  }
-  
-  // 5. 口型同步（强制使用大幅度动画）
-  
-  // 尝试使用表情系统（如果有）
-  if (vrm.expressionManager) {
-    if (isSpeaking) {
-      const mouthValue = Math.abs(Math.sin(animationTime * 10)) * 1.0;
-      const cyclePhase = (animationTime * 10) % (Math.PI * 2);
+
+    // 2. 精确口型同步（配音时）
+    if (vrm.expressionManager && isSpeaking) {
+      const mouthCycle = (animationTime * 10) % (Math.PI * 2);
       
       try {
-        if (cyclePhase < Math.PI * 2 / 3) {
+        // 重置所有口型
+        ['aa', 'A', 'ih', 'I', 'ee', 'E', 'ou', 'O', 'U', 'nn'].forEach(shape => {
+          try { vrm.expressionManager.setValue(shape, 0); } catch (e) {}
+        });
+
+        // 循环切换口型：aa -> ih -> ou
+        if (mouthCycle < Math.PI * 2 / 3) {
           vrm.expressionManager.setValue('aa', 1.0);
           vrm.expressionManager.setValue('A', 1.0);
-        } else if (cyclePhase < Math.PI * 4 / 3) {
+        } else if (mouthCycle < Math.PI * 4 / 3) {
           vrm.expressionManager.setValue('ih', 0.8);
           vrm.expressionManager.setValue('I', 0.8);
           vrm.expressionManager.setValue('ee', 0.6);
@@ -545,53 +527,171 @@ async function drawVRMAvatar(
           vrm.expressionManager.setValue('O', 0.9);
           vrm.expressionManager.setValue('U', 0.7);
         }
-      } catch (e) {
-        // 忽略
-      }
-    } else {
+      } catch (e) {}
+    } else if (vrm.expressionManager && !isSpeaking) {
+      // 不说话时闭嘴
       try {
-        vrm.expressionManager.setValue('aa', 0);
-        vrm.expressionManager.setValue('A', 0);
-        vrm.expressionManager.setValue('ih', 0);
-        vrm.expressionManager.setValue('I', 0);
-        vrm.expressionManager.setValue('ou', 0);
-        vrm.expressionManager.setValue('O', 0);
-        vrm.expressionManager.setValue('ee', 0);
-        vrm.expressionManager.setValue('E', 0);
-        vrm.expressionManager.setValue('U', 0);
+        ['aa', 'A', 'ih', 'I', 'ee', 'E', 'ou', 'O', 'U'].forEach(shape => {
+          try { vrm.expressionManager.setValue(shape, 0); } catch (e) {}
+        });
+      } catch (e) {}
+    }
+
+    // 3. 微妙的身体动作（不说话时静止）
+    if (isSpeaking) {
+      const breathingOffset = Math.sin(animationTime * 0.8) * 0.005;
+      vrm.scene.position.y += breathingOffset;
+      
+      vrm.scene.rotation.y += Math.sin(animationTime * 0.5) * 0.008;
+      vrm.scene.rotation.z = Math.sin(animationTime * 0.4) * 0.015;
+      vrm.scene.rotation.x += Math.sin(animationTime * 0.6) * 0.01;
+    } else {
+      vrm.scene.position.y = 0;
+      vrm.scene.rotation.x = 0;
+      vrm.scene.rotation.y = 0;
+      vrm.scene.rotation.z = 0;
+    }
+
+    // 4. 更新表情管理器
+    if (vrm.expressionManager) {
+      vrm.expressionManager.update();
+    }
+  }
+  // ========================
+  // 高级 Q版模型：保持原有拉伸逻辑
+  // ========================
+  else {
+    // 3D 动画效果：让角色"活"起来
+    const animationTime = currentTime * 2; // 动画时间
+    
+    // 只在说话时才有动画，不说话时完全静止
+    if (isSpeaking) {
+      // 1. 呼吸动画（身体上下起伏）- 减慢速度
+      const breathingOffset = Math.sin(animationTime * 0.8) * 0.005; // 降低频率到0.8
+      vrm.scene.position.y += breathingOffset;
+      
+      // 2. 整体模型微动（适配无骨骼模型）- 减慢速度
+      // 左右轻微摆动
+      vrm.scene.rotation.y += Math.sin(animationTime * 0.5) * 0.008; // 降低频率到0.5
+      vrm.scene.rotation.z = Math.sin(animationTime * 0.4) * 0.015; // 降低频率到0.4
+      
+      // 3. 模拟随风效果（整体摆动）- 减慢速度
+      const swayX = Math.sin(animationTime * 0.3) * 0.01; // 降低频率到0.3
+      const swayZ = Math.sin(animationTime * 0.4) * 0.012; // 降低频率到0.4
+      vrm.scene.rotation.x = swayX;
+    } else {
+      // 不说话时：重置所有动画，保持正面静止
+      vrm.scene.position.y = 0;
+      vrm.scene.rotation.x = 0;
+      vrm.scene.rotation.y = 0;
+      vrm.scene.rotation.z = 0;
+    }
+    
+    // 如果有骨骼系统，则使用骨骼动画（兼容性处理）
+    if (vrm.humanoid) {
+      const head = vrm.humanoid.getNormalizedBoneNode('head');
+      if (head) {
+        head.rotation.y = Math.sin(animationTime * 0.8) * 0.1;
+        head.rotation.z = Math.sin(animationTime * 0.6) * 0.05;
+      }
+      
+      const spine = vrm.humanoid.getNormalizedBoneNode('spine');
+      if (spine) {
+        spine.rotation.z = Math.sin(animationTime * 0.5) * 0.03;
+        spine.rotation.x = Math.sin(animationTime * 0.7) * 0.02;
+      }
+      
+      const chest = vrm.humanoid.getNormalizedBoneNode('chest');
+      if (chest) {
+        chest.rotation.z = Math.sin(animationTime * 0.6 + 1) * 0.025;
+      }
+    }
+    
+    // 4. 眨眼效果（仅使用表情系统，不再用缩放）
+    const blinkCycle = Math.sin(animationTime * 1.2) * 0.5 + 0.5;
+    const shouldBlink = blinkCycle > 0.85;
+    
+    // 尝试使用表情系统（如果有）
+    if (vrm.expressionManager) {
+      try {
+        vrm.expressionManager.setValue('blink', shouldBlink ? 1.0 : 0);
+        vrm.expressionManager.setValue('blinkLeft', shouldBlink ? 1.0 : 0);
+        vrm.expressionManager.setValue('blinkRight', shouldBlink ? 1.0 : 0);
       } catch (e) {
         // 忽略
       }
     }
-    vrm.expressionManager.update();
+    
+    // 5. 口型同步（强制使用大幅度动画）
+    
+    // 尝试使用表情系统（如果有）
+    if (vrm.expressionManager) {
+      if (isSpeaking) {
+        const mouthValue = Math.abs(Math.sin(animationTime * 10)) * 1.0;
+        const cyclePhase = (animationTime * 10) % (Math.PI * 2);
+        
+        try {
+          if (cyclePhase < Math.PI * 2 / 3) {
+            vrm.expressionManager.setValue('aa', 1.0);
+            vrm.expressionManager.setValue('A', 1.0);
+          } else if (cyclePhase < Math.PI * 4 / 3) {
+            vrm.expressionManager.setValue('ih', 0.8);
+            vrm.expressionManager.setValue('I', 0.8);
+            vrm.expressionManager.setValue('ee', 0.6);
+            vrm.expressionManager.setValue('E', 0.6);
+          } else {
+            vrm.expressionManager.setValue('ou', 0.9);
+            vrm.expressionManager.setValue('O', 0.9);
+            vrm.expressionManager.setValue('U', 0.7);
+          }
+        } catch (e) {
+          // 忽略
+        }
+      } else {
+        try {
+          vrm.expressionManager.setValue('aa', 0);
+          vrm.expressionManager.setValue('A', 0);
+          vrm.expressionManager.setValue('ih', 0);
+          vrm.expressionManager.setValue('I', 0);
+          vrm.expressionManager.setValue('ou', 0);
+          vrm.expressionManager.setValue('O', 0);
+          vrm.expressionManager.setValue('ee', 0);
+          vrm.expressionManager.setValue('E', 0);
+          vrm.expressionManager.setValue('U', 0);
+        } catch (e) {
+          // 忽略
+        }
+      }
+      vrm.expressionManager.update();
+    }
+    
+    // 同时使用大幅度动画（无论是否有表情系统）
+    if (isSpeaking) {
+      const talkCycle = Math.sin(animationTime * 8); // 降低频率到8（原10）
+      
+      // 方案：通过Y轴缩放模拟嘴巴垂直张合
+      const mouthOpenScale = 1 + Math.abs(talkCycle) * 0.08; // 嘴巴开合时拉伸
+      vrm.scene.scale.set(
+        1.0, // X轴保持
+        mouthOpenScale, // Y轴拉伸（模拟嘴巴张开）
+        1.0  // Z轴保持
+      );
+      
+      // Z轴前后移动（模拟嘴巴伸出）- 增大幅度
+      vrm.scene.position.z += talkCycle * 0.04; // 增大到0.04
+      
+      // 轻微上下点头
+      vrm.scene.rotation.x += talkCycle * 0.04; // 轻微点头
+      
+      // 轻微左右摇头
+      vrm.scene.rotation.y += Math.cos(animationTime * 8) * 0.02; // 轻微摇头
+    } else {
+      // 不说话时保持正常大小
+      vrm.scene.scale.set(1.0, 1.0, 1.0);
+    }
   }
-  
-  // 同时使用大幅度动画（无论是否有表情系统）
-  if (isSpeaking) {
-    const talkCycle = Math.sin(animationTime * 8); // 降低频率到8（原10）
-    
-    // 方案：通过Y轴缩放模拟嘴巴垂直张合
-    const mouthOpenScale = 1 + Math.abs(talkCycle) * 0.08; // 嘴巴开合时拉伸
-    vrm.scene.scale.set(
-      1.0, // X轴保持
-      mouthOpenScale, // Y轴拉伸（模拟嘴巴张开）
-      1.0  // Z轴保持
-    );
-    
-    // Z轴前后移动（模拟嘴巴伸出）- 增大幅度
-    vrm.scene.position.z += talkCycle * 0.04; // 增大到0.04
-    
-    // 轻微上下点头
-    vrm.scene.rotation.x += talkCycle * 0.04; // 轻微点头
-    
-    // 轻微左右摇头
-    vrm.scene.rotation.y += Math.cos(animationTime * 8) * 0.02; // 轻微摇头
-  } else {
-    // 不说话时保持正常大小
-    vrm.scene.scale.set(1.0, 1.0, 1.0);
-  }
-  
-  // 更新 VRM 模型（每帧更新）
+
+  // 更新 VRM 模型
   vrm.update(1 / 30);
   
   // 5. 配饰环绕旋转效果（查找并旋转模型周围的装饰物）
