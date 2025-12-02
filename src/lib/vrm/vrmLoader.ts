@@ -15,6 +15,7 @@ export interface VRMConfig {
   fallbackImage?: string;   // 降级图片（加载失败时使用）
   position: { x: number; y: number; z: number };
   scale: number;
+  rotationY?: number;       // 自定义Y轴旋转角度（弧度）
 }
 
 /**
@@ -44,11 +45,18 @@ export async function loadVRM(config: VRMConfig): Promise<VRM | null> {
     // 旋转模型使其面向摄像机（VRM标准旋转）
     VRMUtils.rotateVRM0(vrm);
     
-    // 修正模型朝向：VRoid模型经过rotateVRM0后是背对摄像机的
-    // 需要在Y轴上旋转180度，让模型正面朝向摄像机
-    vrm.scene.rotation.y = Math.PI;
-    
-    console.log('✅ 模型已旋转180度，正面朝向摄像机');
+    // 应用自定义旋转角度（如果指定）
+    if (config.rotationY !== undefined) {
+      vrm.scene.rotation.y = config.rotationY;
+      console.log(`✅ 应用自定义旋转: ${(config.rotationY * 180 / Math.PI).toFixed(0)}°`);
+    } else {
+      // 默认：不额外旋转，保持rotateVRM0的结果
+      console.log('ℹ️ 使用默认旋转:', {
+        x: (vrm.scene.rotation.x * 180 / Math.PI).toFixed(1) + '°',
+        y: (vrm.scene.rotation.y * 180 / Math.PI).toFixed(1) + '°',
+        z: (vrm.scene.rotation.z * 180 / Math.PI).toFixed(1) + '°'
+      });
+    }
 
     // 修复手臂姿势：从T-pose改为自然垂放
     if (vrm.humanoid) {
@@ -113,13 +121,13 @@ export function createVRMScene(canvasWidth: number, canvasHeight: number) {
 
   // 摄像机（调整到能看到全身正面）
   const camera = new THREE.PerspectiveCamera(
-    30,  // FOV 30度，看到更完整的身体
+    35,  // FOV 35度，视野范围适中
     canvasWidth / canvasHeight,
     0.1,
     20
   );
-  camera.position.set(0, 0.6, 3.0); // 摄像机位置：稍微降低，拉近一点
-  camera.lookAt(0, 0.6, 0); // 看向模型胸部位置
+  camera.position.set(0, 0.5, 4.0); // 拉远看全身
+  camera.lookAt(0, 0.5, 0); // 看向模型中心
 
   // 光源（增强正面光照）
   const light = new THREE.DirectionalLight(0xffffff, 1.5); // 增强亮度

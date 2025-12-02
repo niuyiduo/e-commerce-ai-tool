@@ -89,17 +89,22 @@ export async function generateVideo(
         
         const modelPath = '/avatars/female/红裙女孩.vrm'; // VRoid Studio 模型
         
+        // 测试4个角度：0°, 90°, 180°, 270°
+        const testRotations = [0, Math.PI / 2, Math.PI, Math.PI * 1.5];
+        const rotationIndex = 2; // 先测试180度 (index 2)
+        
         const vrm = await loadVRM({
           modelPath,
-          position: { x: 0, y: 0, z: 0 },
+          position: { x: 0, y: -0.8, z: 0 }, // Y轴降低，显示完整全身
           scale: 1.0,
+          rotationY: testRotations[rotationIndex], // 应用测试旋转
         });
         
         if (vrm) {
           const scene3D = createVRMScene(400, 400);
           scene3D.scene.add(vrm.scene);
           vrmData = { vrm, scene3D, isPremium: true }; // 标记为顶级模型
-          console.log('⭐ 顶级 VRoid 形象加载成功');
+          console.log(`⭐ 顶级 VRoid 形象加载成功 (旋转: ${(testRotations[rotationIndex] * 180 / Math.PI).toFixed(0)}°)`);
         } else {
           console.warn('⚠️ VRoid 加载失败，降级为基础形象');
           avatarImage = await loadAvatarImage(avatarStyle);
