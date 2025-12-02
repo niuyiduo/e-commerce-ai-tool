@@ -44,9 +44,24 @@ export async function loadVRM(config: VRMConfig): Promise<VRM | null> {
     // 旋转模型使其面向摄像机（VRM标准旋转）
     VRMUtils.rotateVRM0(vrm);
     
-    // 修正模型朝向：让模型正面朝向摄像机（Z轴正方向）
-    // 尝试270度旋转（-90度）
-    vrm.scene.rotation.y = -Math.PI / 2;
+    console.log('🧭 VRMUtils.rotateVRM0 后的初始旋转:', {
+      x: vrm.scene.rotation.x,
+      y: vrm.scene.rotation.y,
+      z: vrm.scene.rotation.z
+    });
+    
+    // 修正模型朝向：VRoid模型需要额外旋转才能面向摄像机
+    // 根据测试，VRoid模型默认是背对摄像机的，需要旋转180度
+    // 但如果180度也不行，说明模型的初始朝向不是我们预期的
+    // 尝试：不额外旋转，看看 VRMUtils.rotateVRM0 的效果
+    // vrm.scene.rotation.y = Math.PI; // 180度
+    // 不额外旋转，保持 VRMUtils.rotateVRM0 的结果
+    
+    console.log('🧭 最终模型旋转角度:', {
+      x: (vrm.scene.rotation.x * 180 / Math.PI).toFixed(1) + '°',
+      y: (vrm.scene.rotation.y * 180 / Math.PI).toFixed(1) + '°',
+      z: (vrm.scene.rotation.z * 180 / Math.PI).toFixed(1) + '°'
+    });
 
     // 修复手臂姿势：从T-pose改为自然垂放
     if (vrm.humanoid) {
