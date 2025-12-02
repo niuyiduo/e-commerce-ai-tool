@@ -341,7 +341,7 @@ export default function Home() {
       
       // 🔥 优化2：根据模型类型设置不同的超时时间
       const isThinkingModel = selectedModel === 'Doubao-1.5-vision-thinking-pro';
-      const timeoutDuration = isThinkingModel ? 60000 : 30000; // thinking模型60秒，普通模型30秒
+      const timeoutDuration = isThinkingModel ? 90000 : 30000; // thinking模型90秒，普通模型30秒
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
@@ -375,7 +375,7 @@ export default function Home() {
       
       // 🔥 优化2：超时错误的友好提示
       const errorMessage = error instanceof Error && error.name === 'AbortError'
-        ? '⏱️ 请求超时（超过30秒），可能是服务器繁忙。\n\n建议：\n1. 刷新页面清空对话历史后重试\n2. 选择轻量级模型（Doubao-lite-4k）\n3. 稍后再试'
+        ? '⏱️ 请求超时（超过30秒），可能是服务器繁忙。\n\n💡 建议：\n1. 刷新页面清空对话历史后重试\n2. 选择轻量级模型（Doubao-lite-4k）\n3. 稍后再试'
         : '抱歉，生成素材时出现错误，请重试。';
       
       setMessages((prev) => [
@@ -479,7 +479,7 @@ export default function Home() {
       
       // 🔥 优化2：根据模型类型设置不同的超时时间
       const useThinkingModel = selectedModel === 'Doubao-1.5-vision-thinking-pro';
-      const timeoutDuration = useThinkingModel ? 60000 : 30000; // thinking模型60秒，普通模型30秒
+      const timeoutDuration = useThinkingModel ? 90000 : 30000; // thinking模型90秒，普通模型30秒
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
@@ -616,8 +616,14 @@ export default function Home() {
       console.error('生成高级装饰图失败:', error);
       
       // 🔥 优化2：超时错误的友好提示
+      const useThinkingModel = selectedModel === 'Doubao-1.5-vision-thinking-pro';
       const errorMessage = error instanceof Error && error.name === 'AbortError'
-        ? '⏱️ AI分析超时（超过30秒）。\n\n建议：刷新页面后重试，或选择轻量级模型。'
+        ? `⏱️ AI分析超时（超过${useThinkingModel ? '90' : '30'}秒）。
+
+💡 ${useThinkingModel ? 'Thinking模型推理复杂' : '服务器繁忙'}，建议：
+1. ${useThinkingModel ? '切换到普通 Doubao-vision 模型（更快）' : '选择轻量级模型'}
+2. 刷新页面后重试
+3. 检查网络连接`
         : '高级装饰图生成失败，请重试。';
       
       setMessages((prev) => [
@@ -707,9 +713,9 @@ export default function Home() {
       // 🔥 优化1：限制对话历史长度
       const recentMessages = messages.slice(-6);
       
-      // 🔥 优化2：thinking模型需要更长的超时时间（60秒）
+      // 🔥 优化2：thinking模型需要更长的超时时间（90秒）
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60秒超时
+      const timeoutId = setTimeout(() => controller.abort(), 90000); // 90秒超时
       
       // 使用思维链模型重新分析
       const response = await fetch('/api/chat', {
@@ -786,7 +792,7 @@ export default function Home() {
       
       // 🔥 优化2：超时错误的友好提示
       const errorMessage = error instanceof Error && error.name === 'AbortError'
-        ? '⏱️ Thinking模型分析超时（超过60秒）。\n\n建议：\n1. 刷新页面后重试\n2. 或选择普通的Doubao-vision模型\n3. 稍后再试'
+        ? '⏱️ Thinking模型分析超时（超过90秒）。\n\n💡 建议：\n1. 刷新页面后重试\n2. 或切换到普通的Doubao-vision模型（更快）\n3. 稍后再试'
         : '升级模型生成失败，请重试。';
       
       setMessages((prev) => [
@@ -848,7 +854,7 @@ export default function Home() {
       
       // 🔥 优化2：根据模型类型设置不同的超时时间
       const useThinkingModel = selectedModel === 'Doubao-1.5-vision-thinking-pro';
-      const timeoutDuration = useThinkingModel ? 60000 : 30000; // thinking模型60秒，普通模型30秒
+      const timeoutDuration = useThinkingModel ? 90000 : 30000; // thinking模型90秒，普通模型30秒
       
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), timeoutDuration);
@@ -952,12 +958,12 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
       // 🔥 优化2：超时错误的友好提示
       const useThinkingModel = selectedModel === 'Doubao-1.5-vision-thinking-pro';
       const errorMessage = error instanceof Error && error.name === 'AbortError'
-        ? `⏱️ 请求超时（超过${useThinkingModel ? '60' : '30'}秒）。
+        ? `⏱️ 请求超时（超过${useThinkingModel ? '90' : '30'}秒）。
 
-建议：
-1. 刷新页面后重试
-2. ${useThinkingModel ? '选择普通的Doubao-vision模型' : '稍后再试'}
-3. 检查网络连接`
+💡 Thinking模型推理复杂，建议：
+1. ${useThinkingModel ? '切换到普通 Doubao-vision 模型（更快）' : '稍后再试'}
+2. 刷新页面后重试
+3. 检查网络连接是否稳定`
         : `重新生成失败：${error instanceof Error ? error.message : '请重试'}`;
       
       setMessages((prev) => [
@@ -1183,7 +1189,7 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                           <div className="w-2 h-2 bg-indigo-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }}></div>
                         </div>
                         <p className="text-sm text-gray-600">
-                          🧠 AI正在分析中，预计{selectedModel === 'Doubao-1.5-vision-thinking-pro' ? '60' : '30'}秒内完成...
+                          🧠 AI正在分析中，预计{selectedModel === 'Doubao-1.5-vision-thinking-pro' ? '60-90' : '30'}秒内完成...
                         </p>
                       </div>
                     </div>
