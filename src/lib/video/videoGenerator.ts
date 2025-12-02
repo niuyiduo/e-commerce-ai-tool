@@ -91,7 +91,7 @@ export async function generateVideo(
         
         // 测试4个角度：0°, 90°, 180°, 270°
         const testRotations = [0, Math.PI / 2, Math.PI, Math.PI * 1.5];
-        const rotationIndex = 2; // 先测试180度 (index 2)
+        const rotationIndex = 0; // 改为0度（不旋转）
         
         const vrm = await loadVRM({
           modelPath,
