@@ -44,24 +44,11 @@ export async function loadVRM(config: VRMConfig): Promise<VRM | null> {
     // 旋转模型使其面向摄像机（VRM标准旋转）
     VRMUtils.rotateVRM0(vrm);
     
-    console.log('🧭 VRMUtils.rotateVRM0 后的初始旋转:', {
-      x: vrm.scene.rotation.x,
-      y: vrm.scene.rotation.y,
-      z: vrm.scene.rotation.z
-    });
+    // 修正模型朝向：VRoid模型经过rotateVRM0后是背对摄像机的
+    // 需要在Y轴上旋转180度，让模型正面朝向摄像机
+    vrm.scene.rotation.y = Math.PI;
     
-    // 修正模型朝向：VRoid模型需要额外旋转才能面向摄像机
-    // 根据测试，VRoid模型默认是背对摄像机的，需要旋转180度
-    // 但如果180度也不行，说明模型的初始朝向不是我们预期的
-    // 尝试：不额外旋转，看看 VRMUtils.rotateVRM0 的效果
-    // vrm.scene.rotation.y = Math.PI; // 180度
-    // 不额外旋转，保持 VRMUtils.rotateVRM0 的结果
-    
-    console.log('🧭 最终模型旋转角度:', {
-      x: (vrm.scene.rotation.x * 180 / Math.PI).toFixed(1) + '°',
-      y: (vrm.scene.rotation.y * 180 / Math.PI).toFixed(1) + '°',
-      z: (vrm.scene.rotation.z * 180 / Math.PI).toFixed(1) + '°'
-    });
+    console.log('✅ 模型已旋转180度，正面朝向摄像机');
 
     // 修复手臂姿势：从T-pose改为自然垂放
     if (vrm.humanoid) {
@@ -131,8 +118,8 @@ export function createVRMScene(canvasWidth: number, canvasHeight: number) {
     0.1,
     20
   );
-  camera.position.set(0, 0.8, 3.5); // 拉远摄像机，提高视角，看到全身
-  camera.lookAt(0, 0.8, 0); // 看向模型中心点（腰部附近）
+  camera.position.set(0, 0.6, 3.0); // 摄像机位置：稍微降低，拉近一点
+  camera.lookAt(0, 0.6, 0); // 看向模型胸部位置
 
   // 光源（增强正面光照）
   const light = new THREE.DirectionalLight(0xffffff, 1.5); // 增强亮度
