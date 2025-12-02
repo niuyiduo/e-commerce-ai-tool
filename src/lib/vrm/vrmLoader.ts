@@ -126,7 +126,8 @@ export function createVRMScene(canvasWidth: number, canvasHeight: number) {
     0.1,
     20
   );
-  camera.position.set(0, 0.5, 4.0); // 拉远看全身
+  // 摄像机从背后看（Z轴负方向），这样就能看到模型正面
+  camera.position.set(0, 0.5, -4.0); // Z轴改为负数，从背后看
   camera.lookAt(0, 0.5, 0); // 看向模型中心
 
   // 光源（增强正面光照）
