@@ -119,16 +119,16 @@ export function createVRMScene(canvasWidth: number, canvasHeight: number) {
   const scene = new THREE.Scene();
   scene.background = null; // 透明背景
 
-  // 摄像机（调整到能看到全身正面）
+  // 摄像机（调整到能看到清晰的脸部表情和口型）
   const camera = new THREE.PerspectiveCamera(
-    35,  // FOV 35度，视野范围适中
+    40,  // FOV 40度，适中视野
     canvasWidth / canvasHeight,
     0.1,
     20
   );
-  // 摄像机从背后看（Z轴负方向），这样就能看到模型正面
-  camera.position.set(0, 0.5, -4.0); // Z轴改为负数，从背后看
-  camera.lookAt(0, 0.5, 0); // 看向模型中心
+  // 摄像机拉近+提高，聚焦到脸部和上半身
+  camera.position.set(0, 1.2, -2.0); // Z轴-2.0拉近，Y轴1.2提高视角
+  camera.lookAt(0, 1.0, 0); // 看向脸部位置（约1米高）
 
   // 光源（增强正面光照）
   const light = new THREE.DirectionalLight(0xffffff, 1.5); // 增强亮度
