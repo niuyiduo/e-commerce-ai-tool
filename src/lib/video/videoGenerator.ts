@@ -129,6 +129,7 @@ export async function generateVideo(
           modelPath,
           position: { x: 0, y: -0.5, z: 0 }, // Y轴轻微降低，显示完整身体
           scale: 1.0,
+          rotationY: Math.PI / 2, // 高级Q版：旋而90°面向正面
         });
         
         if (vrm) {
