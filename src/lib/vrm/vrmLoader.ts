@@ -113,22 +113,32 @@ export async function loadVRM(config: VRMConfig): Promise<VRM | null> {
 
 /**
  * 创建 3D 渲染场景
+ * @param canvasWidth - 画布宽度
+ * @param canvasHeight - 画布高度
+ * @param isPremium - 是否为顶级VRoid模型（默认false）
  */
-export function createVRMScene(canvasWidth: number, canvasHeight: number) {
+export function createVRMScene(canvasWidth: number, canvasHeight: number, isPremium: boolean = false) {
   // 场景
   const scene = new THREE.Scene();
   scene.background = null; // 透明背景
 
-  // 摄像机（调整到能看到清晰的脸部表情和口型）
+  // 摄像机（根据模型类型设置不同参数）
   const camera = new THREE.PerspectiveCamera(
-    45,  // FOV 45度，放大脸部
+    isPremium ? 45 : 35,  // 顶级VRoid: 45°脸部特写，高级Q版: 35°大半身
     canvasWidth / canvasHeight,
     0.1,
     20
   );
-  // 摄像机进一步拉近，聚焦脸部特写
-  camera.position.set(0, 1.3, -1.2); // Z轴-1.2更近，Y轴1.3更高
-  camera.lookAt(0, 1.2, 0); // 看向脸部中心
+  
+  if (isPremium) {
+    // 顶级VRoid：拉近聚焦脸部特写
+    camera.position.set(0, 1.3, -1.2); // Z轴-1.2更近，Y轴1.3更高
+    camera.lookAt(0, 1.2, 0); // 看向脸部中心
+  } else {
+    // 高级Q版：显示大半上身
+    camera.position.set(0, 0.5, 2.5); // 原始参数
+    camera.lookAt(0, 0.5, 0); // 看向模型中心
+  }
 
   // 光源（增强正面光照）
   const light = new THREE.DirectionalLight(0xffffff, 1.5); // 增强亮度

@@ -102,7 +102,7 @@ export async function generateVideo(
         });
         
         if (vrm) {
-          const scene3D = createVRMScene(800, 800); // 提高到800x800，增强清晰度
+          const scene3D = createVRMScene(800, 800, true); // 顶级VRoid：传入true
           scene3D.scene.add(vrm.scene);
           vrmData = { vrm, scene3D, isPremium: true }; // 标记为顶级模型
           console.log(`⭐ 顶级 VRoid 形象加载成功 (性别: ${actualGender === 'female' ? '女性' : '男性'}, 声音: ${voiceType})`);
@@ -132,8 +132,8 @@ export async function generateVideo(
         });
         
         if (vrm) {
-          // 创建 3D 渲染场景（增大渲染尺寸以提高清晰度）
-          const scene3D = createVRMScene(400, 400);
+          // 创建 3D 渲染场景（高级Q版：传入false）
+          const scene3D = createVRMScene(400, 400, false); // 高级Q版：传入false
           scene3D.scene.add(vrm.scene);
           vrmData = { vrm, scene3D, isPremium: false }; // 标记为高级模型
           console.log('✅ 高级 VRM 3D 形象加载成功');
