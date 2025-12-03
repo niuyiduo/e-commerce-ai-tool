@@ -102,7 +102,7 @@ export async function generateVideo(
         });
         
         if (vrm) {
-          const scene3D = createVRMScene(800, 800, true); // 顶级VRoid：传入true
+          const scene3D = createVRMScene(1200, 1200, true); // 顶级VRoid：提升到1200x1200
           scene3D.scene.add(vrm.scene);
           vrmData = { vrm, scene3D, isPremium: true }; // 标记为顶级模型
           console.log(`⭐ 顶级 VRoid 形象加载成功 (性别: ${actualGender === 'female' ? '女性' : '男性'}, 声音: ${voiceType})`);
@@ -134,7 +134,7 @@ export async function generateVideo(
         
         if (vrm) {
           // 创建 3D 渲染场景（高级Q版：传入false）
-          const scene3D = createVRMScene(400, 400, false); // 高级Q版：传入false
+          const scene3D = createVRMScene(1200, 1200, false); // 提升到1200x1200，增强清晰度
           scene3D.scene.add(vrm.scene);
           vrmData = { vrm, scene3D, isPremium: false }; // 标记为高级模型
           console.log('✅ 高级 VRM 3D 形象加载成功');
@@ -490,6 +490,10 @@ async function drawVRMAvatar(
   const animationTime = currentTime * 2;
 
   console.log(`模型类型: ${isPremium ? '顶级VRoid' : '高级Q版'}, 说话: ${isSpeaking}`);
+
+  // 开启高质量图像平滑（消除缩放模糊）
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = 'high';
 
   // ========================
   // 顶级 VRoid 模型：使用真实表情系统
