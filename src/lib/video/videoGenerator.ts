@@ -82,36 +82,38 @@ export async function generateVideo(
   
   if (enableAvatar) {
     // 优先级：顶级VRoid > 高级VRM > 基础形象
-    if (usePremiumAvatar && avatarStyle === 'female') {
-      // 顶级模式：加载 VRoid Studio 模型（目前仅支持女性）
+    if (usePremiumAvatar && (avatarStyle === 'female' || avatarStyle === 'male')) {
+      // 顶级模式：加载 VRoid Studio 模型（支持男女双性别）
+      // 根据配音声音类型自动匹配对应性别的VRoid模型
       try {
         const { loadVRM, createVRMScene } = await import('@/lib/vrm/vrmLoader');
         
-        const modelPath = '/avatars/female/红裙女孩.vrm'; // VRoid Studio 模型
-        
-        // 测试4个角度：0°, 90°, 180°, 270°
-        const testRotations = [0, Math.PI / 2, Math.PI, Math.PI * 1.5];
-        const rotationIndex = 1; // 测试95度，确认旋转是否生效
+        // 根据配音声音自动匹配模型：女声→女模型，男声→男模型
+        const actualGender = voiceType === 'female' ? 'female' : 'male';
+        const modelPath = actualGender === 'female'
+          ? '/avatars/female/红裙女孩.vrm'  // 女性VRoid模型
+          : '/avatars/male/西装男生.vrm';     // 男性VRoid模型
         
         const vrm = await loadVRM({
           modelPath,
           position: { x: 0, y: -0.8, z: 0 }, // Y轴降低，显示完整全身
           scale: 1.0,
-          rotationY: testRotations[rotationIndex], // 应用测试旋转
+          rotationY: 0, // 不额外旋转，使用默认朝向
         });
         
         if (vrm) {
           const scene3D = createVRMScene(800, 800); // 提高到800x800，增强清晰度
           scene3D.scene.add(vrm.scene);
           vrmData = { vrm, scene3D, isPremium: true }; // 标记为顶级模型
-          console.log(`⭐ 顶级 VRoid 形象加载成功 (旋转: ${(testRotations[rotationIndex] * 180 / Math.PI).toFixed(0)}°)`);
+          console.log(`⭐ 顶级 VRoid 形象加载成功 (性别: ${actualGender === 'female' ? '女性' : '男性'}, 声音: ${voiceType})`);
         } else {
           console.warn('⚠️ VRoid 加载失败，降级为基础形象');
-          avatarImage = await loadAvatarImage(avatarStyle);
+          avatarImage = await loadAvatarImage(actualGender as any);
         }
       } catch (error) {
         console.warn('⚠️ VRoid 加载失败，降级为基础形象:', error);
-        avatarImage = await loadAvatarImage(avatarStyle);
+        const fallbackGender = voiceType === 'female' ? 'female' : 'male';
+        avatarImage = await loadAvatarImage(fallbackGender as any);
       }
     } else if (useAdvancedAvatar && (avatarStyle === 'female' || avatarStyle === 'male')) {
       // 高级模式：加载 VRM 3D 模型（支持男女双性别）

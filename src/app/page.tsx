@@ -1537,14 +1537,13 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                       <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <span className="text-sm font-semibold text-[#FFD700]">⭐ 顶级 VRoid 形象</span>
-                          <span className="text-xs bg-gradient-to-r from-[#FFD700] to-[#FF6B00] text-white px-2 py-0.5 rounded">女声</span>
+                          <span className="text-xs bg-gradient-to-r from-[#FFD700] to-[#FF6B00] text-white px-2 py-0.5 rounded">男/女声</span>
                         </div>
                         <button
                           onClick={() => {
                             setUsePremiumAvatar(!usePremiumAvatar);
                             if (!usePremiumAvatar) {
                               setUseAdvancedAvatar(false); // 互斥
-                              setVoiceType('female'); // 自动切换为女声
                             }
                           }}
                           className={`px-2 py-1 text-xs rounded transition-colors ${
@@ -1558,13 +1557,13 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                       </div>
                       <p className="text-xs text-gray-400 mt-1">
                         {usePremiumAvatar 
-                          ? '🎭 VRoid Studio 女性模型 + 真实表情 + 精确口型同步 + 配音动作同步' 
-                          : '📌 开启后使用 VRoid Studio 创建的顶级模型（仅女性形象，配女声）'
+                          ? `🎭 VRoid Studio ${voiceType === 'female' ? '女性' : '男性'}模型 + 真实表情 + 精确口型同步 + 配音动作同步` 
+                          : '📌 开启后使用 VRoid Studio 创建的顶级模型（支持男/女形象，自动匹配声音）'
                         }
                       </p>
-                      {usePremiumAvatar && voiceType !== 'female' && (
-                        <p className="text-xs text-[#FF6B00] mt-2 font-semibold">
-                          ⚠️ 提示：顶级VRoid仅支持女性形象，建议配女声使用
+                      {usePremiumAvatar && (
+                        <p className="text-xs text-[#00D4FF] mt-2 font-semibold">
+                          🎵 当前形象：{voiceType === 'female' ? '👩 红裙女孩' : '👨 西装男生'}（根据{voiceType === 'female' ? '女声' : '男声'}自动匹配）
                         </p>
                       )}
                     </div>
@@ -1685,7 +1684,7 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                     <div className="p-3 bg-[#FE2C55]/10 border border-[#FE2C55]/30 rounded-lg mt-3">
                       <p className="text-sm text-[#FE2C55]">
                         ✨ 已启用 <span className="font-semibold">
-                          {usePremiumAvatar && '顶级VRoid女性形象'}
+                          {usePremiumAvatar && (voiceType === 'female' ? '👩 顶级VRoid女性形象' : '👨 顶级VRoid男性形象')}
                           {useAdvancedAvatar && !usePremiumAvatar && (avatarStyle === 'female' ? '中国风女娃娃' : '男生Q版') + ' VRM'}
                           {!useAdvancedAvatar && !usePremiumAvatar && (
                             <>
