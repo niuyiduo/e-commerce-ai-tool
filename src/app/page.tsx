@@ -1678,7 +1678,8 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                       </p>
                     </div>
 
-                    {!useAdvancedAvatar && !usePremiumAvatar && (
+                    {/* 普通形象UI已移除 - 仅支持高级VRM和顶级VRoid形象 */}
+                    {/* {!useAdvancedAvatar && !usePremiumAvatar && (
                       <>
                     <p className="text-xs text-gray-300 mb-2 font-medium">选择虚拟形象风格：</p>
                     <div className="grid grid-cols-4 gap-3">
@@ -1722,9 +1723,10 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                       >
                         🐱 猫咪
                       </button>
-                    </div>
+                    </div> */}
                     
-                    {!useAdvancedAvatar && !usePremiumAvatar && (
+                    {/* 普通形象位置选择UI已移除 */}
+                    {/* {!useAdvancedAvatar && !usePremiumAvatar && (
                       <>
                     <p className="text-xs text-gray-300 mb-2 font-medium mt-3">形象位置：</p>
                     <div className="grid grid-cols-3 gap-3">
@@ -1760,47 +1762,36 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                       </button>
                     </div>
                       </>
-                    )}
+                    )} */}
                     
-                    <div className="p-3 bg-[#FE2C55]/10 border border-[#FE2C55]/30 rounded-lg mt-3">
-                      <p className="text-sm text-[#FE2C55]">
-                        ✨ 已启用 <span className="font-semibold">
-                          {usePremiumAvatar && (voiceType === 'female' ? '👩 顶级VRoid女性形象' : '👨 顶级VRoid男性形象')}
-                          {useAdvancedAvatar && !usePremiumAvatar && (avatarStyle === 'female' ? '中国风女娃娃' : '男生Q版') + ' VRM'}
-                          {!useAdvancedAvatar && !usePremiumAvatar && (
-                            <>
-                              {avatarStyle === 'female' && '女生形象'}
-                              {avatarStyle === 'male' && '男生形象'}
-                              {avatarStyle === 'robot' && '机器人形象'}
-                              {avatarStyle === 'cute' && '可爱猫咚'}
-                            </>
-                          )}
-                        </span> 虚拟形象，将显示在视频
-                        {!useAdvancedAvatar && !usePremiumAvatar && (avatarPosition === 'bottom-left' ? '左下角' : avatarPosition === 'bottom-right' ? '右下角' : '右上角')}
-                        {(useAdvancedAvatar || usePremiumAvatar) && '右上角'}
-                      </p>
-                      <p className="text-xs text-gray-300 mt-1">
-                        💡 当启用配音时，形象会在“说话”时有动画效果
-                      </p>
-                    </div>
-                      </>
-                    )}
-                    
-                    {useAdvancedAvatar && (
-                      <div className="p-3 bg-gradient-to-r from-[#FFD700]/10 to-[#FE2C55]/10 border border-[#FFD700]/30 rounded-lg">
-                        <p className="text-sm text-[#FFD700]">
-                          🎭 已启用 <span className="font-semibold">
-                            {avatarStyle === 'female' ? '中国风女娃娃' : '男生Q版'} VRM
-                          </span> 3D 模型
+                                        
+                    {/* 未选择任何形象的提示 */}
+                    {!useAdvancedAvatar && !usePremiumAvatar && (
+                      <div className="p-3 bg-yellow-500/10 border border-yellow-500/30 rounded-lg mt-3">
+                        <p className="text-sm text-yellow-500">
+                          ⚠️ 未选择虚拟形象
                         </p>
-                        <p className="text-xs text-gray-300 mt-1">
-                          ✨ 支持智能口型同步 + 配饰环绕旋转 + 多层次动画
-                        </p>
-                        <p className="text-xs text-[#FFD700] mt-2 font-semibold">
-                          📍 默认显示位置：右上角
+                        <p className="text-xs text-gray-400 mt-1">
+                          请选择"顶级VRoid形象"或"高级VRM形象"来启用虚拟讲解功能
                         </p>
                       </div>
                     )}
+                    
+                    {/* 形象状态提示 - 仅显示高级和顶级形象 */}
+                    {(useAdvancedAvatar || usePremiumAvatar) && (
+                      <div className="p-3 bg-[#FE2C55]/10 border border-[#FE2C55]/30 rounded-lg mt-3">
+                        <p className="text-sm text-[#FE2C55]">
+                          ✨ 已启用 <span className="font-semibold">
+                            {usePremiumAvatar && (voiceType === 'female' ? '👩 顶级VRoid女性形象' : '👨 顶级VRoid男性形象')}
+                            {useAdvancedAvatar && !usePremiumAvatar && '中国风女娃娃 VRM'}
+                          </span> 虚拟形象，将显示在视频右上角
+                        </p>
+                        <p className="text-xs text-gray-300 mt-1">
+                          💡 当启用配音时，形象会在"说话"时有动画效果
+                        </p>
+                      </div>
+                    )}
+
                   </div>
                 ) : (
                   <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
