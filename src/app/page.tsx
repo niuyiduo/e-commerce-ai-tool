@@ -419,6 +419,33 @@ export default function Home() {
       const finalImage = await addWatermark(decorativeImage);
       setGeneratedImage(finalImage);
 
+      // 💾 保存到数据库（普通装饰）
+      try {
+        console.log('💾 正在保存普通装饰图到数据库...');
+        const saveResponse = await fetch('/api/logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: '普通装饰图生成',
+            material_type: 'atmosphere',
+            title: '普通装饰宣传图',
+            selling_points: '促销徽章+装饰贴纸+价格标签',
+            atmosphere_text: '包含促销元素、100+装饰贴纸、四角边框、光效装饰',
+            atmosphere_image_url: finalImage,
+            raw_response: '普通装饰模式生成'
+          })
+        });
+
+        const saveData = await saveResponse.json();
+        if (saveData.success) {
+          console.log('✅ 普通装饰图已保存到数据库！');
+        } else {
+          console.error('⚠️ 数据库保存失败:', saveData.error);
+        }
+      } catch (saveError) {
+        console.error('⚠️ 数据库保存失败:', saveError);
+      }
+
       setMessages((prev) => [
         ...prev.slice(0, -1),
         { 
@@ -560,6 +587,33 @@ export default function Home() {
       setStepOneImage(finalImage);
       setGeneratedImage(finalImage);
 
+      // 💾 保存到数据库（第一步：无边框）
+      try {
+        console.log('💾 正在保存高级定制装饰图（无边框）到数据库...');
+        const saveResponse = await fetch('/api/logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: `高级定制装饰：${parsedInfo.name}`,
+            material_type: 'atmosphere_advanced',
+            title: parsedInfo.name,
+            selling_points: parsedInfo.highlight,
+            atmosphere_text: parsedInfo.description,
+            atmosphere_image_url: finalImage,
+            raw_response: aiResponse
+          })
+        });
+
+        const saveData = await saveResponse.json();
+        if (saveData.success) {
+          console.log('✅ 高级定制装饰图（无边框）已保存到数据库！');
+        } else {
+          console.error('⚠️ 数据库保存失败:', saveData.error);
+        }
+      } catch (saveError) {
+        console.error('⚠️ 数据库保存失败:', saveError);
+      }
+
       // 🔥 区分模型：普通Vision模型不显示边框选项，直接完成（复用上面的useThinkingModel变量）
       
       if (useThinkingModel) {
@@ -660,6 +714,33 @@ export default function Home() {
       const finalImage = await addWatermark(borderedImage);
       setGeneratedImage(finalImage);
       setHasBorderAdded(true); // 🔥 标记已添加边框
+
+      // 💾 保存到数据库（第二步：有边框）
+      try {
+        console.log('💾 正在保存高级定制装饰图（带边框）到数据库...');
+        const saveResponse = await fetch('/api/logs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            prompt: `高级定制装饰+${getBorderStyleName(selectedBorderStyle)}边框：${productInfo.name}`,
+            material_type: 'atmosphere_advanced_bordered',
+            title: productInfo.name,
+            selling_points: productInfo.highlight,
+            atmosphere_text: productInfo.description,
+            atmosphere_image_url: finalImage,
+            raw_response: `边框风格: ${selectedBorderStyle}`
+          })
+        });
+
+        const saveData = await saveResponse.json();
+        if (saveData.success) {
+          console.log('✅ 高级定制装饰图（带边框）已保存到数据库！');
+        } else {
+          console.error('⚠️ 数据库保存失败:', saveData.error);
+        }
+      } catch (saveError) {
+        console.error('⚠️ 数据库保存失败:', saveError);
+      }
 
       setMessages((prev) => [
         ...prev.slice(0, -1),

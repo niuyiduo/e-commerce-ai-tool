@@ -1171,7 +1171,7 @@ export async function generateSmartDecorativeImage(
     borderStyle = 'simple',
   } = options;
 
-  return new Promise((resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
     
@@ -1183,7 +1183,7 @@ export async function generateSmartDecorativeImage(
     const img = new Image();
     img.crossOrigin = 'anonymous';
     
-    img.onload = () => {
+    img.onload = async () => {
       canvas.width = img.width;
       canvas.height = img.height;
 
@@ -1221,6 +1221,7 @@ export async function generateSmartDecorativeImage(
 
       // 第二步：可选边框
       if (addBorder) {
+        // 使用本地Canvas绘制边框
         drawBorder(ctx, canvas.width, canvas.height, borderStyle);
       }
 

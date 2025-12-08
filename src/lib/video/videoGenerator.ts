@@ -76,15 +76,13 @@ export async function generateVideo(
     images.map(src => loadImage(src))
   );
 
-  // 加载虚拟形象（如果启用）
-  let avatarImage: HTMLImageElement | null = null;
-  let vrmData: any = null; // 高级/顶级 VRM 3D 形象数据
+  // 加载虚拟形象（仅支持高级VRM和顶级VRoid）
+  let vrmData: any = null; // VRM 3D 形象数据
   
   if (enableAvatar) {
-    // 优先级：顶级VRoid > 高级VRM > 基础形象
+    // 优先级：顶级VRoid > 高级VRM
     if (usePremiumAvatar && (avatarStyle === 'female' || avatarStyle === 'male')) {
       // 顶级模式：加载 VRoid Studio 模型（支持男女双性别）
-      // 根据配音声音类型自动匹配对应性别的VRoid模型
       try {
         const { loadVRM, createVRMScene } = await import('@/lib/vrm/vrmLoader');
         
@@ -102,18 +100,15 @@ export async function generateVideo(
         });
         
         if (vrm) {
-          const scene3D = createVRMScene(1200, 1200, true); // 顶级VRoid：提升到1200x1200
+          const scene3D = createVRMScene(800, 800, true); // 顶级VRoid：传入true
           scene3D.scene.add(vrm.scene);
           vrmData = { vrm, scene3D, isPremium: true }; // 标记为顶级模型
           console.log(`⭐ 顶级 VRoid 形象加载成功 (性别: ${actualGender === 'female' ? '女性' : '男性'}, 声音: ${voiceType})`);
         } else {
-          console.warn('⚠️ VRoid 加载失败，降级为基础形象');
-          avatarImage = await loadAvatarImage(actualGender as any);
+          console.warn('⚠️ VRoid 加载失败');
         }
       } catch (error) {
-        console.warn('⚠️ VRoid 加载失败，降级为基础形象:', error);
-        const fallbackGender = voiceType === 'female' ? 'female' : 'male';
-        avatarImage = await loadAvatarImage(fallbackGender as any);
+        console.warn('⚠️ VRoid 加载失败:', error);
       }
     } else if (useAdvancedAvatar && (avatarStyle === 'female' || avatarStyle === 'male')) {
       // 高级模式：加载 VRM 3D 模型（支持男女双性别）
@@ -134,25 +129,21 @@ export async function generateVideo(
         
         if (vrm) {
           // 创建 3D 渲染场景（高级Q版：传入false）
-          const scene3D = createVRMScene(1200, 1200, false); // 提升到1200x1200，增强清晰度
+          const scene3D = createVRMScene(400, 400, false); // 高级Q版：传入false
           scene3D.scene.add(vrm.scene);
           vrmData = { vrm, scene3D, isPremium: false }; // 标记为高级模型
           console.log('✅ 高级 VRM 3D 形象加载成功');
         } else {
-          console.warn('⚠️ VRM 加载失败，降级为基础形象');
-          avatarImage = await loadAvatarImage(avatarStyle);
+          console.warn('⚠️ VRM 加载失败');
         }
       } catch (error) {
-        console.warn('⚠️ VRM 加载失败，降级为基础形象:', error);
-        avatarImage = await loadAvatarImage(avatarStyle);
+        console.warn('⚠️ VRM 加载失败:', error);
       }
     } else {
-      // 基础模式：加载 Emoji 形象
-      try {
-        avatarImage = await loadAvatarImage(avatarStyle);
-      } catch (error) {
-        console.warn('虚拟形象加载失败，将不显示形象:', error);
-      }
+      // 无效配置：既没有选择高级也没有选择顶级
+      console.warn('⚠️ 视频生成仅支持高级VRM和顶级VRoid形象');
+      console.warn('⚠️ 普通形象（女生/男生/机器人/猫咪）已被移除，请开启高级或顶级形象选项');
+      console.warn('⚠️ 当前视频将不显示虚拟形象，仅显示图片和字幕');
     }
   }
 
@@ -293,11 +284,8 @@ export async function generateVideo(
       }
       
       if (vrmData) {
-        // 高级模式：VRM 3D 形象固定在右上角
+        // 高级/顶级模式：VRM 3D 形象固定在右上角
         await drawVRMAvatar(ctx, canvas.width, canvas.height, vrmData, 'top-right', currentTime, isSpeaking);
-      } else if (avatarImage) {
-        // 基础模式：绘制 2D Emoji 形象
-        drawAvatar(ctx, canvas.width, canvas.height, avatarImage, avatarPosition, currentTime, isSpeaking);
       }
     }
     
@@ -337,134 +325,6 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 }
 
 /**
- * 加载虚拟形象图片（使用 Emoji/SVG 作为占位符）
- */
-async function loadAvatarImage(style: 'female' | 'male' | 'robot' | 'cute'): Promise<HTMLImageElement> {
-  // 不同风格的虚拟形象 Emoji
-  const avatarEmojis = {
-    female: '👩',     // 女性形象
-    male: '👨',       // 男性形象
-    robot: '🤖',     // 机器人（中性）
-    cute: '🐱',      // 可爱猫咪（中性）
-  };
-
-  const emoji = avatarEmojis[style];
-  
-  // 创建一个 Canvas 来渲染 Emoji
-  const canvas = document.createElement('canvas');
-  canvas.width = 200;
-  canvas.height = 200;
-  const ctx = canvas.getContext('2d');
-  
-  if (!ctx) {
-    throw new Error('Canvas context not available');
-  }
-  
-  // 绘制圆形背景
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-  ctx.beginPath();
-  ctx.arc(100, 100, 90, 0, Math.PI * 2);
-  ctx.fill();
-  
-  // 绘制边框
-  ctx.strokeStyle = '#FE2C55';
-  ctx.lineWidth = 4;
-  ctx.stroke();
-  
-  // 绘制 Emoji
-  ctx.font = '120px Arial';
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  ctx.fillText(emoji, 100, 110);
-  
-  // 转换为 Image
-  return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) {
-        reject(new Error('Failed to create avatar blob'));
-        return;
-      }
-      
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => reject(new Error('Failed to load avatar image'));
-      img.src = URL.createObjectURL(blob);
-    });
-  });
-}
-
-/**
- * 绘制虚拟形象
- */
-function drawAvatar(
-  ctx: CanvasRenderingContext2D,
-  width: number,
-  height: number,
-  avatarImage: HTMLImageElement,
-  position: 'bottom-left' | 'bottom-right' | 'top-right',
-  currentTime: number,
-  isSpeaking: boolean
-) {
-  const avatarSize = 120; // 形象大小
-  const padding = 20; // 边距
-  
-  // 计算位置
-  let x: number, y: number;
-  switch (position) {
-    case 'bottom-left':
-      x = padding;
-      y = height - avatarSize - padding;
-      break;
-    case 'bottom-right':
-      x = width - avatarSize - padding;
-      y = height - avatarSize - padding;
-      break;
-    case 'top-right':
-      x = width - avatarSize - padding;
-      y = padding;
-      break;
-  }
-  
-  // 说话动画：缩放效果（模拟呼吸）
-  let scale = 1;
-  if (isSpeaking) {
-    const breatheSpeed = 3; // 呼吸速度
-    const breatheAmount = 0.05; // 呼吸幅度
-    scale = 1 + Math.sin(currentTime * breatheSpeed * Math.PI) * breatheAmount;
-  }
-  
-  // 保存当前状态
-  ctx.save();
-  
-  // 移动到形象中心点
-  ctx.translate(x + avatarSize / 2, y + avatarSize / 2);
-  
-  // 应用缩放
-  ctx.scale(scale, scale);
-  
-  // 绘制形象（从中心点绘制）
-  ctx.drawImage(
-    avatarImage,
-    -avatarSize / 2,
-    -avatarSize / 2,
-    avatarSize,
-    avatarSize
-  );
-  
-  // 添加发光效果（说话时）
-  if (isSpeaking) {
-    ctx.strokeStyle = 'rgba(254, 44, 85, 0.6)';
-    ctx.lineWidth = 3;
-    ctx.beginPath();
-    ctx.arc(0, 0, avatarSize / 2 + 5, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-  
-  // 恢复状态
-  ctx.restore();
-}
-
-/**
  * 绘制 VRM 3D 虚拟形象
  * @param isPremium - 是否为顶级VRoid模型（支持真实表情和口型）
  */
@@ -490,10 +350,6 @@ async function drawVRMAvatar(
   const animationTime = currentTime * 2;
 
   console.log(`模型类型: ${isPremium ? '顶级VRoid' : '高级Q版'}, 说话: ${isSpeaking}`);
-
-  // 开启高质量图像平滑（消除缩放模糊）
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = 'high';
 
   // ========================
   // 顶级 VRoid 模型：使用真实表情系统
