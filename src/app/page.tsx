@@ -77,6 +77,8 @@ export default function Home() {
       const reader = new FileReader();
       reader.onload = (event) => {
         setProductImage(event.target?.result as string);
+        // 🔥 重新上传图片时清空历史对话，实现对话数据隔离
+        setMessages([]);
         // 重置所有相关状态（新图片 = 新一轮）
         setDissatisfactionCount(0);
         setProductInfo({ name: '', origin: '', highlight: '', description: '' });
@@ -131,6 +133,8 @@ export default function Home() {
       const reader = new FileReader();
       reader.onload = (event) => {
         setProductImage(event.target?.result as string);
+        // 🔥 重新上传图片时清空历史对话，实现对话数据隔离
+        setMessages([]);
         // 重置所有相关状态（新图片 = 新一轮）
         setDissatisfactionCount(0);
         setProductInfo({ name: '', origin: '', highlight: '', description: '' });
@@ -255,6 +259,15 @@ export default function Home() {
       return;
     }
     
+    // 🔥 检测图片方向，提示用户
+    const orientationWarning = await checkImageOrientations(uploadedImages);
+    if (orientationWarning) {
+      const confirmGenerate = window.confirm(orientationWarning);
+      if (!confirmGenerate) {
+        return; // 用户取消生成
+      }
+    }
+    
     setIsGeneratingVideo(true);
     
     try {
@@ -286,6 +299,29 @@ export default function Home() {
     } finally {
       setIsGeneratingVideo(false);
     }
+  };
+
+  // 🔥 检测图片方向并生成提示信息
+  const checkImageOrientations = async (images: string[]): Promise<string | null> => {
+    const orientations = await Promise.all(
+      images.map(src => new Promise<{isHorizontal: boolean}>((resolve) => {
+        const img = new Image();
+        img.onload = () => {
+          resolve({ isHorizontal: img.width >= img.height });
+        };
+        img.onerror = () => resolve({ isHorizontal: true }); // 错误时默认横版
+        img.src = src;
+      }))
+    );
+    
+    const hasHorizontal = orientations.some(o => o.isHorizontal);
+    const hasVertical = orientations.some(o => !o.isHorizontal);
+    
+    if (hasHorizontal && hasVertical) {
+      return '⚠️ 检测到横竖版图片混合上传！\n\n📐 视频将以横版格式生成（1280x720），以适配横版图片。\n\n💡 建议：为获得最佳效果，请上传相同方向的图片。\n\n是否继续生成？';
+    }
+    
+    return null; // 无警告
   };
 
   // 下载生成的视频
@@ -1245,11 +1281,21 @@ ${userFeedback.includes('字') || userFeedback.includes('大小') || userFeedbac
                       <p className="whitespace-pre-wrap">{msg.content}</p>
                       {msg.type === 'image' && msg.imageUrl && (
                         <div className="mt-3">
-                          <img 
-                            src={msg.imageUrl} 
-                            alt="生成的氛围图" 
-                            className="rounded-lg max-w-full h-auto"
-                          />
+                          {/* 🔥 根据边框风格添加动态效果 */}
+                          <div className={`relative ${
+                            hasBorderAdded && selectedBorderStyle === 'simple' ? 'border-simple-animated' :
+                            hasBorderAdded && selectedBorderStyle === 'guochao' ? 'border-guochao-animated' :
+                            hasBorderAdded && selectedBorderStyle === 'gradient' ? 'border-gradient-animated' :
+                            hasBorderAdded && selectedBorderStyle === 'luxury' ? 'border-luxury-animated' :
+                            ''
+                          } rounded-lg`}>
+                            <img 
+                              src={msg.imageUrl} 
+                              alt="生成的氛围图" 
+                              className="rounded-lg max-w-full h-auto relative"
+                              style={{ zIndex: 0 }}
+                            />
+                          </div>
                           <button
                             onClick={handleDownloadImage}
                             className="mt-2 w-full px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors"

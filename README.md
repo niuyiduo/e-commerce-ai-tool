@@ -838,7 +838,7 @@ const handleDrop = (e) => {
 
 ## 🐛 常见问题
 
-### 1. 数据库连接失败 🆕
+### 1. 数据库连接失败 
 
 **问题**：`ECONNREFUSED` 或 `Access denied`
 

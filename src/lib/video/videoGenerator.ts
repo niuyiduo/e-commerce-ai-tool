@@ -76,6 +76,26 @@ export async function generateVideo(
     images.map(src => loadImage(src))
   );
 
+  // 🔥 智能检测图片方向，决定视频尺寸
+  const imageOrientations = loadedImages.map(img => ({
+    isHorizontal: img.width >= img.height,
+    width: img.width,
+    height: img.height
+  }));
+  
+  const hasHorizontalImage = imageOrientations.some(o => o.isHorizontal);
+  const hasVerticalImage = imageOrientations.some(o => !o.isHorizontal);
+  
+  // 决定视频方向：只要有横版图片就用横版，全是竖版才用竖版
+  const isVideoHorizontal = hasHorizontalImage;
+  
+  // 混合情况提示
+  if (hasHorizontalImage && hasVerticalImage) {
+    console.warn('⚠️ 检测到横竖版图片混合上传');
+    console.warn('📐 视频将以横版格式生成（1280x720），以适配横版图片');
+    console.warn('💡 建议：为获得最佳效果，请上传相同方向的图片');
+  }
+
   // 加载虚拟形象（仅支持高级VRM和顶级VRoid）
   let vrmData: any = null; // VRM 3D 形象数据
   
@@ -147,10 +167,18 @@ export async function generateVideo(
     }
   }
 
-  // 设置画布尺寸（使用第一张图片的尺寸）
-  const firstImg = loadedImages[0];
-  canvas.width = firstImg.width;
-  canvas.height = firstImg.height;
+  // 设置画布尺寸（🔥 根据图片方向智能决定，优化虚拟人展示）
+  if (isVideoHorizontal) {
+    // 横版视频：1280x720 (16:9) - 适合横版图片和虚拟人展示
+    canvas.width = 1280;
+    canvas.height = 720;
+    console.log('📹 视频格式：横版 1280x720');
+  } else {
+    // 竖版视频：720x1280 (9:16) - 适配短视频平台，便于虚拟人在右上角展示
+    canvas.width = 720;
+    canvas.height = 1280;
+    console.log('📹 视频格式：竖版 720x1280 (适配短视频平台)');
+  }
 
   // 生成视频帧
   const frames: ImageData[] = [];
@@ -232,32 +260,40 @@ export async function generateVideo(
     // 绘制帧
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
+    // 🔥 计算图片等比例居中缩放参数
+    const drawImageCentered = (img: HTMLImageElement, alpha = 1) => {
+      const scale = Math.min(canvas.width / img.width, canvas.height / img.height);
+      const scaledWidth = img.width * scale;
+      const scaledHeight = img.height * scale;
+      const x = (canvas.width - scaledWidth) / 2;
+      const y = (canvas.height - scaledHeight) / 2;
+      
+      ctx.globalAlpha = alpha;
+      ctx.drawImage(img, x, y, scaledWidth, scaledHeight);
+    };
+    
     if (transition === 'fade' && progressInImage > (1 - transitionDuration / durationPerImage) && imageIndex < loadedImages.length - 1) {
       // 淡入淡出转场
       const fadeProgress = (progressInImage - (1 - transitionDuration / durationPerImage)) / (transitionDuration / durationPerImage);
       
       // 绘制当前图片
-      ctx.globalAlpha = 1 - fadeProgress;
-      ctx.drawImage(loadedImages[imageIndex], 0, 0, canvas.width, canvas.height);
+      drawImageCentered(loadedImages[imageIndex], 1 - fadeProgress);
       
       // 绘制下一张图片
-      ctx.globalAlpha = fadeProgress;
-      ctx.drawImage(loadedImages[nextImageIndex], 0, 0, canvas.width, canvas.height);
+      drawImageCentered(loadedImages[nextImageIndex], fadeProgress);
       
       ctx.globalAlpha = 1;
     } else if (transition === 'slide' && progressInImage > (1 - transitionDuration / durationPerImage) && imageIndex < loadedImages.length - 1) {
-      // 滑动转场
+      // 滑动转场（简化：渐变切换）
       const slideProgress = (progressInImage - (1 - transitionDuration / durationPerImage)) / (transitionDuration / durationPerImage);
-      const offset = canvas.width * slideProgress;
       
-      // 绘制当前图片（向左移出）
-      ctx.drawImage(loadedImages[imageIndex], -offset, 0, canvas.width, canvas.height);
+      drawImageCentered(loadedImages[imageIndex], 1 - slideProgress);
+      drawImageCentered(loadedImages[nextImageIndex], slideProgress);
       
-      // 绘制下一张图片（从右侧移入）
-      ctx.drawImage(loadedImages[nextImageIndex], canvas.width - offset, 0, canvas.width, canvas.height);
+      ctx.globalAlpha = 1;
     } else {
       // 无转场或正常显示
-      ctx.drawImage(loadedImages[imageIndex], 0, 0, canvas.width, canvas.height);
+      drawImageCentered(loadedImages[imageIndex]);
     }
     
    // 添加讲解字幕（如果有）

@@ -42,3 +42,133 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #555;
 }
+
+/* 🔥 装饰边框动态效果 - 图片整体透明度动画 */
+
+/* 简约边框 - 图片整体缩小放大动态效果 */
+.border-simple-animated {
+  position: relative;
+  overflow: visible;
+  border-radius: 8px;
+}
+
+.border-simple-animated img {
+  animation: simpleImagePulse 2s ease-in-out infinite;
+}
+
+@keyframes simpleImagePulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.03); opacity: 0.95; }
+}
+
+/* 国潮边框 - 图片整体透明从上到下流动效果 */
+.border-guochao-animated {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.border-guochao-animated::before {
+  content: '';
+  position: absolute;
+  top: -100%;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(180deg,
+    rgba(255, 0, 0, 0.6) 0%,
+    rgba(255, 215, 0, 0.7) 25%,
+    rgba(255, 111, 0, 0.6) 50%,
+    rgba(198, 40, 40, 0.5) 75%,
+    transparent 100%
+  );
+  animation: guochaoTopToBottomFlow 3s linear infinite;
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+@keyframes guochaoTopToBottomFlow {
+  0% { top: -100%; }
+  100% { top: 100%; }
+}
+
+/* 渐变边框 - 图片整体透明从中心到四周扩散效果 */
+.border-gradient-animated {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.border-gradient-animated::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(circle,
+    rgba(255, 23, 68, 0.7) 0%,
+    rgba(233, 30, 99, 0.6) 15%,
+    rgba(156, 39, 176, 0.5) 30%,
+    rgba(63, 81, 181, 0.4) 45%,
+    rgba(0, 188, 212, 0.3) 60%,
+    rgba(76, 175, 80, 0.2) 75%,
+    transparent 100%
+  );
+  animation: gradientCenterExpand 3s ease-in-out infinite;
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+@keyframes gradientCenterExpand {
+  0% {
+    width: 0;
+    height: 0;
+    opacity: 0;
+  }
+  50% {
+    width: 200%;
+    height: 200%;
+    opacity: 1;
+  }
+  100% {
+    width: 400%;
+    height: 400%;
+    opacity: 0;
+  }
+}
+
+/* 豪华边框 - 图片整体透明从左到右流动效果 */
+.border-luxury-animated {
+  position: relative;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.border-luxury-animated::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 50%;
+  height: 100%;
+  background: linear-gradient(90deg,
+    transparent 0%,
+    rgba(255, 215, 0, 0.7) 20%,
+    rgba(255, 165, 0, 0.8) 50%,
+    rgba(255, 140, 0, 0.7) 80%,
+    transparent 100%
+  );
+  animation: luxuryLeftToRightFlow 2.5s linear infinite;
+  z-index: 1;
+  pointer-events: none;
+  mix-blend-mode: overlay;
+}
+
+@keyframes luxuryLeftToRightFlow {
+  0% { left: -100%; }
+  100% { left: 200%; }
+}

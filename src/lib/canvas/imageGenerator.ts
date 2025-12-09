@@ -1184,11 +1184,25 @@ export async function generateSmartDecorativeImage(
     img.crossOrigin = 'anonymous';
     
     img.onload = async () => {
-      canvas.width = img.width;
-      canvas.height = img.height;
+      // 🔥 根据图片方向固定尺寸，保证AI内容清晰展示
+      const isHorizontal = img.width >= img.height;
+      
+      if (isHorizontal) {
+        // 横版图片：固定宽度 1200px，高度按比例计算
+        const targetWidth = 1200;
+        const scale = targetWidth / img.width;
+        canvas.width = targetWidth;
+        canvas.height = Math.round(img.height * scale);
+      } else {
+        // 竖版图片：固定高度 1200px，宽度按比例计算
+        const targetHeight = 1200;
+        const scale = targetHeight / img.height;
+        canvas.width = Math.round(img.width * scale);
+        canvas.height = targetHeight;
+      }
 
-      // 绘制底图
-      ctx.drawImage(img, 0, 0);
+      // 绘制缩放后的图片
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
       // 第一步：只添加AI真正识别到的信息（过滤无效内容）
       const validProductName = productName && !isGenericText(productName) ? productName : '';
@@ -1500,7 +1514,8 @@ function drawMinimalStickers(
 }
 
 /**
- * 绘制边框（多种风格）
+ * 🔥 绘制边框（抖音电商级动态效果）
+ * 新增：粒子动画、流光特效、霓虹闪烁、3D质感
  */
 function drawBorder(
   ctx: CanvasRenderingContext2D,
@@ -1510,89 +1525,430 @@ function drawBorder(
 ) {
   ctx.save();
 
-  const borderWidth = 25; // 🔥 增加边框宽度，使其更明显
+  const borderWidth = 12; // 减小边框宽度，不遮挡内容
 
   switch (style) {
     case 'simple':
-      // 🔥 简约边框 - 纯白色双线框
+      // 🔥 简约边框 - 白色细线 + 闪光点
+      // 外层：白色亮线
       ctx.strokeStyle = '#FFFFFF';
-      ctx.lineWidth = borderWidth;
+      ctx.lineWidth = 4;
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+      ctx.shadowBlur = 10;
       ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
       
-      // 内层灰色线
-      ctx.strokeStyle = '#CCCCCC';
-      ctx.lineWidth = 5;
-      ctx.strokeRect(borderWidth + 5, borderWidth + 5, width - borderWidth * 2 - 10, height - borderWidth * 2 - 10);
+      // 内层：淡灰线
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = '#E0E0E0';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(borderWidth / 2 + 6, borderWidth / 2 + 6, width - borderWidth - 12, height - borderWidth - 12);
+      
+      // 🔥 四角闪光点
+      drawSimpleCornerDots(ctx, width, height, borderWidth);
       break;
 
     case 'guochao':
-      // 🔥 国潮边框 - 红金渐变 + 四角装饰
+      // 🔥 国潮边框 - 红金双线 + 四角灯笼
+      // 外层：红金渐变粗线
       const guochaoGradient = ctx.createLinearGradient(0, 0, width, height);
-      guochaoGradient.addColorStop(0, '#D32F2F');
-      guochaoGradient.addColorStop(0.3, '#FFD700');
-      guochaoGradient.addColorStop(0.7, '#FFD700');
-      guochaoGradient.addColorStop(1, '#D32F2F');
+      guochaoGradient.addColorStop(0, '#C62828');
+      guochaoGradient.addColorStop(0.33, '#FFD700');
+      guochaoGradient.addColorStop(0.66, '#FF6F00');
+      guochaoGradient.addColorStop(1, '#C62828');
       
       ctx.strokeStyle = guochaoGradient;
-      ctx.lineWidth = borderWidth;
+      ctx.lineWidth = 6;
+      ctx.shadowColor = '#FFD700';
+      ctx.shadowBlur = 15;
       ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
       
-      // 内层金色装饰线
+      // 内层：金色细线
+      ctx.shadowBlur = 0;
       ctx.strokeStyle = '#FFD700';
-      ctx.lineWidth = 5;
-      ctx.strokeRect(borderWidth + 5, borderWidth + 5, width - borderWidth * 2 - 10, height - borderWidth * 2 - 10);
+      ctx.lineWidth = 3;
+      ctx.strokeRect(borderWidth / 2 + 8, borderWidth / 2 + 8, width - borderWidth - 16, height - borderWidth - 16);
       
-      // 🔥 国潮四角装饰
-      drawGuochaoCorners(ctx, width, height, borderWidth);
+      // 🔥 四角红灯笼装饰
+      drawGuochaoLanterns(ctx, width, height, borderWidth);
       break;
 
     case 'gradient':
-      // 🔥 渐变边框 - 紫粉蓝渐变 + 阴影效果
-      const gradientBorder = ctx.createLinearGradient(0, 0, width, height);
-      gradientBorder.addColorStop(0, '#FF1744');
-      gradientBorder.addColorStop(0.33, '#E91E63');
-      gradientBorder.addColorStop(0.66, '#9C27B0');
-      gradientBorder.addColorStop(1, '#673AB7');
+      // 🔥 渐变边框 - 彩虹流光线 + 边角星光
+      // 外层：彩虹渐变
+      const neonGradient = ctx.createLinearGradient(0, 0, width, height);
+      neonGradient.addColorStop(0, '#FF1744');
+      neonGradient.addColorStop(0.25, '#E91E63');
+      neonGradient.addColorStop(0.5, '#9C27B0');
+      neonGradient.addColorStop(0.75, '#3F51B5');
+      neonGradient.addColorStop(1, '#00BCD4');
       
-      // 外层发光效果
-      ctx.shadowColor = 'rgba(156, 39, 176, 0.8)';
+      ctx.shadowColor = '#E91E63';
       ctx.shadowBlur = 20;
-      ctx.strokeStyle = gradientBorder;
-      ctx.lineWidth = borderWidth;
+      ctx.strokeStyle = neonGradient;
+      ctx.lineWidth = 5;
       ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
       
-      // 清除阴影
-      ctx.shadowColor = 'transparent';
-      ctx.shadowBlur = 0;
+      // 内层：白色发光线
+      ctx.shadowColor = 'rgba(255, 255, 255, 0.8)';
+      ctx.shadowBlur = 12;
+      ctx.strokeStyle = '#FFFFFF';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(borderWidth / 2 + 7, borderWidth / 2 + 7, width - borderWidth - 14, height - borderWidth - 14);
       
-      // 内层白色发光线
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-      ctx.lineWidth = 3;
-      ctx.strokeRect(borderWidth + 6, borderWidth + 6, width - borderWidth * 2 - 12, height - borderWidth * 2 - 12);
+      // 🔥 边角彩色星光
+      drawGradientStars(ctx, width, height, borderWidth);
       break;
 
     case 'luxury':
-      // 🔥 豪华边框 - 金色三层框 + 宝石角装饰
-      // 最外层：深金色
+      // 🔥 豪华边框 - 金色双线 + 四角钻石
+      // 外层：深金色
       ctx.strokeStyle = '#B8860B';
-      ctx.lineWidth = borderWidth;
+      ctx.lineWidth = 6;
+      ctx.shadowColor = '#FFD700';
+      ctx.shadowBlur = 18;
       ctx.strokeRect(borderWidth / 2, borderWidth / 2, width - borderWidth, height - borderWidth);
       
-      // 中间层：亮金色
-      ctx.strokeStyle = '#FFD700';
-      ctx.lineWidth = 12;
-      ctx.strokeRect(borderWidth + 6, borderWidth + 6, width - borderWidth * 2 - 12, height - borderWidth * 2 - 12);
+      // 中层：亮金色渐变
+      const goldGradient = ctx.createLinearGradient(0, 0, width, height);
+      goldGradient.addColorStop(0, '#FFD700');
+      goldGradient.addColorStop(0.5, '#FFA500');
+      goldGradient.addColorStop(1, '#FFD700');
+      ctx.shadowBlur = 0;
+      ctx.strokeStyle = goldGradient;
+      ctx.lineWidth = 4;
+      ctx.strokeRect(borderWidth / 2 + 5, borderWidth / 2 + 5, width - borderWidth - 10, height - borderWidth - 10);
       
-      // 内层：红棕色
+      // 内层：暗金细线
       ctx.strokeStyle = '#8B4513';
-      ctx.lineWidth = 6;
-      ctx.strokeRect(borderWidth + 14, borderWidth + 14, width - borderWidth * 2 - 28, height - borderWidth * 2 - 28);
+      ctx.lineWidth = 2;
+      ctx.strokeRect(borderWidth / 2 + 9, borderWidth / 2 + 9, width - borderWidth - 18, height - borderWidth - 18);
       
-      // 🔥 四角宝石装饰
-      drawLuxuryCorners(ctx, width, height, borderWidth);
+      // 🔥 四角钻石装饰
+      drawLuxuryDiamonds(ctx, width, height, borderWidth);
       break;
   }
 
+  ctx.restore();
+}
+
+/**
+ * 🔥 简约边框四角闪光点
+ */
+function drawSimpleCornerDots(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  borderWidth: number
+) {
+  ctx.save();
+  
+  const corners = [
+    { x: borderWidth, y: borderWidth },
+    { x: width - borderWidth, y: borderWidth },
+    { x: borderWidth, y: height - borderWidth },
+    { x: width - borderWidth, y: height - borderWidth },
+  ];
+  
+  corners.forEach(({ x, y }) => {
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, 20);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+    gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.5)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, 20, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  ctx.restore();
+}
+
+/**
+ * 🔥 国潮四角灯笼装饰
+ */
+function drawGuochaoLanterns(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  borderWidth: number
+) {
+  ctx.save();
+  
+  const corners = [
+    { x: borderWidth, y: borderWidth },
+    { x: width - borderWidth, y: borderWidth },
+    { x: borderWidth, y: height - borderWidth },
+    { x: width - borderWidth, y: height - borderWidth },
+  ];
+  
+  corners.forEach(({ x, y }) => {
+    // 金色菱形
+    ctx.fillStyle = '#FFD700';
+    ctx.beginPath();
+    ctx.moveTo(x, y - 15);
+    ctx.lineTo(x + 15, y);
+    ctx.lineTo(x, y + 15);
+    ctx.lineTo(x - 15, y);
+    ctx.closePath();
+    ctx.fill();
+    
+    // 红色内圆
+    ctx.fillStyle = '#C62828';
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  ctx.restore();
+}
+
+/**
+ * 🔥 渐变边框边角彩色星光
+ */
+function drawGradientStars(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  borderWidth: number
+) {
+  ctx.save();
+  
+  const corners = [
+    { x: borderWidth, y: borderWidth, color: '#FF1744' },
+    { x: width - borderWidth, y: borderWidth, color: '#9C27B0' },
+    { x: borderWidth, y: height - borderWidth, color: '#3F51B5' },
+    { x: width - borderWidth, y: height - borderWidth, color: '#00BCD4' },
+  ];
+  
+  corners.forEach(({ x, y, color }) => {
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, 25);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(0.5, color + '80');
+    gradient.addColorStop(1, color + '00');
+    
+    ctx.fillStyle = gradient;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(x, y, 25, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  ctx.restore();
+}
+
+/**
+ * 🔥 豪华边框四角钻石
+ */
+function drawLuxuryDiamonds(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  borderWidth: number
+) {
+  ctx.save();
+  
+  const corners = [
+    { x: borderWidth, y: borderWidth },
+    { x: width - borderWidth, y: borderWidth },
+    { x: borderWidth, y: height - borderWidth },
+    { x: width - borderWidth, y: height - borderWidth },
+  ];
+  
+  corners.forEach(({ x, y }) => {
+    // 金色钻石外轮廓
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, 18);
+    gradient.addColorStop(0, '#FFD700');
+    gradient.addColorStop(0.5, '#FFA500');
+    gradient.addColorStop(1, '#B8860B');
+    
+    ctx.fillStyle = gradient;
+    ctx.shadowColor = '#FFD700';
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.moveTo(x, y - 18);
+    ctx.lineTo(x + 12, y);
+    ctx.lineTo(x, y + 18);
+    ctx.lineTo(x - 12, y);
+    ctx.closePath();
+    ctx.fill();
+    
+    // 白色高光
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+    ctx.beginPath();
+    ctx.arc(x, y, 5, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  
+  ctx.restore();
+}
+
+/**
+ * 🔥 简约边框微光粒子
+ */
+function drawSimpleParticles(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  borderWidth: number
+) {
+  ctx.save();
+  
+  // 在边框上绘制8个随机位置的微光点
+  const particles = 12;
+  for (let i = 0; i < particles; i++) {
+    const isTopBottom = i % 2 === 0;
+    const x = isTopBottom ? (width / particles) * i : (i < particles / 2 ? borderWidth / 2 : width - borderWidth / 2);
+    const y = isTopBottom ? (i < particles / 2 ? borderWidth / 2 : height - borderWidth / 2) : (height / particles) * i;
+    
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, 15);
+    gradient.addColorStop(0, 'rgba(255, 255, 255, 0.9)');
+    gradient.addColorStop(0.5, 'rgba(255, 255, 255, 0.4)');
+    gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+    
+    ctx.fillStyle = gradient;
+    ctx.beginPath();
+    ctx.arc(x, y, 15, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  ctx.restore();
+}
+
+/**
+ * 🔥 国潮祥云纹样
+ */
+function drawGuochaoCloudPattern(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  borderWidth: number
+) {
+  ctx.save();
+  ctx.strokeStyle = '#FFD700';
+  ctx.lineWidth = 3;
+  ctx.lineCap = 'round';
+  
+  // 顶部祥云纹
+  const cloudCount = 6;
+  for (let i = 0; i < cloudCount; i++) {
+    const x = (width / cloudCount) * i + borderWidth;
+    const y = borderWidth / 2;
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.arc(x + 10, y, 6, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  
+  // 底部祥云纹
+  for (let i = 0; i < cloudCount; i++) {
+    const x = (width / cloudCount) * i + borderWidth;
+    const y = height - borderWidth / 2;
+    
+    ctx.beginPath();
+    ctx.arc(x, y, 8, 0, Math.PI * 2);
+    ctx.stroke();
+    
+    ctx.beginPath();
+    ctx.arc(x + 10, y, 6, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  
+  ctx.restore();
+}
+
+/**
+ * 🔥 霓虹星光粒子（渐变边框）
+ */
+function drawNeonParticles(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  borderWidth: number
+) {
+  ctx.save();
+  
+  const colors = ['#FF1744', '#E91E63', '#9C27B0', '#673AB7', '#2196F3'];
+  const particleCount = 20;
+  
+  for (let i = 0; i < particleCount; i++) {
+    const isHorizontal = i % 2 === 0;
+    let x, y;
+    
+    if (isHorizontal) {
+      x = (width / particleCount) * i;
+      y = i < particleCount / 2 ? borderWidth / 2 : height - borderWidth / 2;
+    } else {
+      x = i < particleCount / 2 ? borderWidth / 2 : width - borderWidth / 2;
+      y = (height / particleCount) * i;
+    }
+    
+    const color = colors[i % colors.length];
+    const gradient = ctx.createRadialGradient(x, y, 0, x, y, 12);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(0.5, color + '80');
+    gradient.addColorStop(1, color + '00');
+    
+    ctx.fillStyle = gradient;
+    ctx.shadowColor = color;
+    ctx.shadowBlur = 15;
+    ctx.beginPath();
+    ctx.arc(x, y, 12, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  
+  ctx.restore();
+}
+
+/**
+ * 🔥 豪华边框光芒效果
+ */
+function drawLuxuryRays(
+  ctx: CanvasRenderingContext2D,
+  width: number,
+  height: number,
+  borderWidth: number
+) {
+  ctx.save();
+  
+  // 四角发射光芒
+  const corners = [
+    { x: borderWidth, y: borderWidth },
+    { x: width - borderWidth, y: borderWidth },
+    { x: borderWidth, y: height - borderWidth },
+    { x: width - borderWidth, y: height - borderWidth },
+  ];
+  
+  corners.forEach(({ x, y }) => {
+    // 绘制8条放射状光芒
+    for (let i = 0; i < 8; i++) {
+      const angle = (Math.PI * 2 / 8) * i;
+      const length = 60;
+      
+      const gradient = ctx.createLinearGradient(
+        x, y,
+        x + Math.cos(angle) * length,
+        y + Math.sin(angle) * length
+      );
+      gradient.addColorStop(0, 'rgba(255, 215, 0, 0.8)');
+      gradient.addColorStop(0.5, 'rgba(255, 215, 0, 0.3)');
+      gradient.addColorStop(1, 'rgba(255, 215, 0, 0)');
+      
+      ctx.strokeStyle = gradient;
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(x + Math.cos(angle) * length, y + Math.sin(angle) * length);
+      ctx.stroke();
+    }
+  });
+  
   ctx.restore();
 }
 
